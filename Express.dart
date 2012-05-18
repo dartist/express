@@ -400,7 +400,7 @@ bool routeMatches(String route, String matchesPath) => pathMatcher(route, matche
 
 Map<String,String> pathMatcher(String routePath, String matchesPath){
   Map params = {};
-  if (route == matchesPath) return params;
+  if (routePath == matchesPath) return params;
   List<String> pathComponents = matchesPath.split("/");
   List<String> routeComponents = routePath.split("/");
   if (pathComponents.length == routeComponents.length){

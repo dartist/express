@@ -13,10 +13,12 @@ Follow [@demisbellot](http://twitter.com/demisbellot) for updates.
 This will be made available on the Dart Package Manager when its ready, until then you can easily make use of this library by adding it as a submodule at your projects root:
 
     git submodule add git@github.com:mythz/DartExpress.git vendor/Express
+    cd vendor/Express
+    git submodule init
+    git submodule update    
 
-Note: you can pull future updates on the client with a git pull in the submodule directory, e.g:
+Then you can pull future project updates with a git pull in the submodule directory, e.g:
 
-    cd vendor/Mixins
     git pull origin master    
 
 If you prefer not to add a submodule you can just copy the single, stand-alone [Express.dart](https://github.com/mythz/DartExpress/blob/master/Express.dart) file. 
@@ -80,8 +82,12 @@ Register encapsulated Modules like StaticFileHandler
       void register(HttpServer server);
     }
 
-The core Express API upon which all the Apps modules and request handlers are registered on
-Calls the request handler of the first matching route with a HttpContext
+The signature your Request Handlers should implement
+
+    typedef void RequestHandler (HttpContext ctx);
+
+The core Express API where all your Apps modules and request handlers are registered on.
+Then when the server has started, the request handler of the first matching route found will be executed.
 
     interface Express default _Express {
       Express();
@@ -124,8 +130,7 @@ Calls the request handler of the first matching route with a HttpContext
       // When all routes and modules are registered - Start the HttpServer on host:port
       void listen([String host, int port]);
 
-A high-level object encapsulating both HttpRequest and HttpResponse objects
-with useful overloads for each for common operations and usage patterns.
+A high-level object encapsulating both HttpRequest and HttpResponse objects providing useful overloads for common operations and usage patterns.
 
     interface HttpContext default _HttpContext {
       HttpContext(HttpRequest this.req, HttpResponse this.res, [String this.routePath]);
@@ -162,10 +167,6 @@ with useful overloads for each for common operations and usage patterns.
       //Custom Status responses
       void notFound([String statusReason, Object value, String contentType]);
     }
-
-The signature your Request Handlers should implement
-
-    typedef void RequestHandler (HttpContext ctx);
 
 ## Modules
 

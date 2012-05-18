@@ -103,7 +103,7 @@ class _Express implements Express {
   List<Module> _modules;
   HttpServer server;
 
-  Express() {
+  _Express() {
     _verbPaths = new Map<String, LinkedHashMap<String,RequestHandler>>();
     _verbs.forEach((x) => _verbPaths[x] = {});
     _modules = new List<Module>();

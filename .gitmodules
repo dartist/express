@@ -1,0 +1,3 @@
+[submodule "vendor/Mixins"]
+	path = vendor/Mixins
+	url = git@github.com:mythz/DartMixins.git

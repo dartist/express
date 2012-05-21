@@ -181,7 +181,10 @@ class _HttpContext implements HttpContext {
     if (params == null){
       params = pathMatcher(routePath, req.path);
     }
-    return params[name];
+    var p = params[name];
+    return p != null
+        ? p
+        : req.queryParameters[name];
   }
 
   Future<List<int>> readAsBytes() {
@@ -389,14 +392,6 @@ class StaticFileHandler implements Module {
 }
 
 bool routeMatches(String route, String matchesPath) => pathMatcher(route, matchesPath) != null;
-
-//  print(pathMatcher("/tests", "/tests"));
-//  print(pathMatcher("/tests/:id", "/tests/1"));
-//  print(pathMatcher("/tests/:id", "/tests"));
-//  print(pathMatcher("/tests/:id", "/rests"));
-//  print(pathMatcher("/todos", "/todos.css"));
-//  print(pathMatcher("/todos", "/todos.js"));
-//  print(pathMatcher("/users/:id/todos/:todoId", "/users/1/todos/2"));
 
 Map<String,String> pathMatcher(String routePath, String matchesPath){
   Map params = {};

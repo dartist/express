@@ -1,11 +1,13 @@
 vendor/Mixins/tests/CollectionTests.dart
 vendor/Mixins/tests/MixinTests.dart
+tests/ExpressTests.dart
 vendor/Mixins/tests/UtilityTests.dart
 vendor/Mixins/tests/MixinTestSuite.dart
 vendor/Mixins/tests/StringTests.dart
 vendor/Mixins/Example.dart
 vendor/Mixins/tests/FunctionTests.dart
 Express.dart
+tests/ExpressTestSuite.dart
 vendor/Mixins/DUnit.dart
 vendor/Mixins/tests/ObjectTests.dart
 vendor/Mixins/Mixin.dart

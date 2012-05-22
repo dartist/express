@@ -17,35 +17,36 @@ interface Express default _Express {
   Express();
 
   //Register a module to be used with this app
-  void use(Module module);
+  Express use(Module module);
 
   //Register a request handler that will be called for a matching GET request
-  get(handlerMapping, RequestHandler handler);
+  Express get(String atRoute, RequestHandler handler);
 
   //Register a request handler that will be called for a matching POST request
-  post(handlerMapping, RequestHandler handler);
+  Express post(String atRoute, RequestHandler handler);
 
   //Register a request handler that will be called for a matching PUT request
-  put(handlerMapping, RequestHandler handler);
+  Express put(String atRoute, RequestHandler handler);
 
   //Register a request handler that will be called for a matching DELETE request
-  delete(handlerMapping, RequestHandler handler);
+  Express delete(String atRoute, RequestHandler handler);
 
   //Register a request handler that will be called for a matching PATCH request
-  patch(handlerMapping, RequestHandler handler);
+  Express patch(String atRoute, RequestHandler handler);
 
   //Register a request handler that will be called for a matching HEAD request
-  head(handlerMapping, RequestHandler handler);
+  Express head(String atRoute, RequestHandler handler);
 
   //Register a request handler that will be called for a matching OPTIONS request
-  options(handlerMapping, RequestHandler handler);
+  Express options(String atRoute, RequestHandler handler);
 
-  // Register a request handler that handles ANY verb
-  any(handlerMapping, RequestHandler handler);
+  //Register a request handler that handles ANY verb
+  Express any(String atRoute, RequestHandler handler);
 
-  // Alias for registering a request handler matching ANY verb
-  void operator []=(String handlerMapping, RequestHandler handler);
+  //Alias for registering a request handler matching ANY verb
+  void operator []=(String atRoute, RequestHandler handler);
 
+  //Can any of the registered routes handle this HttpRequest
   bool handlesRequest(HttpRequest req);
 
   // Return true if this HttpRequest is a match for this verb and route
@@ -66,7 +67,6 @@ interface HttpContext default _HttpContext {
   HttpRequest  req;
   HttpResponse res;
   Map<String,String> params;
-  String param(String name);
 
   //Read
   String get contentType();
@@ -109,36 +109,45 @@ class _Express implements Express {
     _modules = new List<Module>();
   }
 
+  Express _addHandler(String verb, String atRoute, RequestHandler handler){
+    _verbPaths[verb][atRoute] = handler;
+    return this;
+  }
+
   // Use this to add a module to your project
-  void use(Module module) => _modules.add(module);
+  Express use(Module module){
+    _modules.add(module);
+    return this;
+  }
 
-  get(handlerMapping, RequestHandler handler) =>
-      _verbPaths["GET"][handlerMapping] = handler;
+  Express get(String atRoute, RequestHandler handler) =>
+      _addHandler("GET", atRoute, handler);
 
-  post(handlerMapping, RequestHandler handler) =>
-      _verbPaths["POST"][handlerMapping] = handler;
+  Express post(String atRoute, RequestHandler handler) =>
+      _addHandler("POST", atRoute, handler);
 
-  put(handlerMapping, RequestHandler handler) =>
-      _verbPaths["PUT"][handlerMapping] = handler;
+  Express put(String atRoute, RequestHandler handler) =>
+      _addHandler("PUT", atRoute, handler);
 
-  delete(handlerMapping, RequestHandler handler) =>
-      _verbPaths["DELETE"][handlerMapping] = handler;
+  Express delete(String atRoute, RequestHandler handler) =>
+      _addHandler("DELETE", atRoute, handler);
 
-  patch(handlerMapping, RequestHandler handler) =>
-      _verbPaths["PATCH"][handlerMapping] = handler;
+  Express patch(String atRoute, RequestHandler handler) =>
+      _addHandler("PATCH", atRoute, handler);
 
-  head(handlerMapping, RequestHandler handler) =>
-      _verbPaths["HEAD"][handlerMapping] = handler;
+  Express head(String atRoute, RequestHandler handler) =>
+      _addHandler("HEAD", atRoute, handler);
 
-  options(handlerMapping, RequestHandler handler) =>
-      _verbPaths["OPTIONS"][handlerMapping] = handler;
+  Express options(String atRoute, RequestHandler handler) =>
+      _addHandler("OPTIONS", atRoute, handler);
 
   // Register a request handler that handles any verb
-  any(handlerMapping, RequestHandler handler) =>
-      _verbPaths["ANY"][handlerMapping] = handler;
+  Express any(String atRoute, RequestHandler handler) =>
+      _addHandler("ANY", atRoute, handler);
 
-  void operator []=(String handlerMapping, RequestHandler handler) =>
-    any(handlerMapping, handler);
+  void operator []=(String atRoute, RequestHandler handler){
+    any(atRoute, handler);
+  }
 
   bool handlesRequest(HttpRequest req) {
     bool foundMatch = _verbPaths[req.method] != null &&
@@ -172,19 +181,16 @@ class _HttpContext implements HttpContext {
   RequestHandler handler;
   HttpRequest  req;
   HttpResponse res;
-  Map<String,String> params;
+  Map<String,String> _params;
   String _format;
 
   _HttpContext(HttpRequest this.req, HttpResponse this.res, [String this.routePath]);
 
-  String param(String name) {
-    if (params == null){
-      params = pathMatcher(routePath, req.path);
+  Map<String,String> get params(){
+    if (_params == null){
+      _params = $(pathMatcher(routePath, req.path)).addAll(req.queryParameters);
     }
-    var p = params[name];
-    return p != null
-        ? p
-        : req.queryParameters[name];
+    return _params;
   }
 
   Future<List<int>> readAsBytes() {

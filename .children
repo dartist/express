@@ -4,11 +4,14 @@ tests/ExpressTests.dart
 vendor/Mixins/tests/UtilityTests.dart
 vendor/Mixins/tests/MixinTestSuite.dart
 vendor/Mixins/tests/StringTests.dart
+tests/HttpClientBug.dart
 vendor/Mixins/Example.dart
 vendor/Mixins/tests/FunctionTests.dart
 Express.dart
 tests/ExpressTestSuite.dart
+tests/JsonClient.dart
 vendor/Mixins/DUnit.dart
 vendor/Mixins/tests/ObjectTests.dart
 vendor/Mixins/Mixin.dart
+tests/InMemoryRedisClient.dart
 vendor/Mixins/tests/ArrayTests.dart

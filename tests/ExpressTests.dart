@@ -32,6 +32,13 @@ ExpressTests() {
   var client = new JsonClient("http://127.0.0.1:8000");
 
   Express app = new Express();
+
+  app["/counter"] = (HttpContext ctx){
+    redis.incr("counter").then((nextIncr) =>
+        ctx.sendJson(nextIncr)
+    );
+  };
+
   app
     .use(new StaticFileHandler())
     .get("/todos", (HttpContext ctx){
@@ -111,5 +118,17 @@ ExpressTests() {
     });
   });
 
+  asyncTest("Express: test app[route] handles all verbs", (){
+    client.counter()
+      .then((counter) {
+        equal(counter, 1, "New counter starts at 1");
+
+        client.counter({'force-POST':true})
+          .then((nextCounter){
+            equal(nextCounter, 2, "Next counter is 2");
+            start();
+          });
+      });
+  });
 
 }

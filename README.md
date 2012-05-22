@@ -29,50 +29,50 @@ This is an example of an Redis-powered REST backend Backbones.js demo TODO appli
 
       RedisClient client = new RedisClient();
 
-      Express app = new Express();
+  Express app = new Express();
+  app
+    .use(new StaticFileHandler())
 
-      app.use(new StaticFileHandler());
-
-      app.get("/todos", (HttpContext ctx){
-        client.keys("todo:*").then((keys) =>
-          client.mget(keys).then(ctx.sendJson)
-        );
-      });
-
-      app.get("/todos/:id", (HttpContext ctx){
-        var id = ctx.param("id");
-        client.get("todo:$id}").then((todo) => todo != null ?
-            ctx.sendJson(todo) :
-            ctx.notFound("todo $id does not exist")
-        );
-      });
-
-      app.post("/todos", (HttpContext ctx){
-        ctx.readAsJson().then((x){
-          client.incr("ids:todo").then((newId){
-            var todo = $(x).defaults({"content":null,"done":false,"order":0});
-            todo["id"] = newId;
-            client.set("todo:$newId", todo);
-            ctx.sendJson(todo);
-          });
-        });
-      });
-
-      app.put("/todos/:id", (HttpContext ctx){
-        var id = ctx.param("id");
-        ctx.readAsJson().then((todo){
-          client.set("todo:$id", todo);
+    .get("/todos", (HttpContext ctx){
+      redis.keys("todo:*").then((keys) =>
+        redis.mget(keys).then(ctx.sendJson)
+      );
+    })
+    
+    .get("/todos/:id", (HttpContext ctx){
+      var id = ctx.params["id"];
+      redis.get("todo:$id").then((todo) =>
+        todo != null ?
+          ctx.sendJson(todo) :
+          ctx.notFound("todo $id does not exist")
+      );
+    })
+    
+    .post("/todos", (HttpContext ctx){
+      ctx.readAsJson().then((x){
+        redis.incr("ids:todo").then((newId){
+          var todo = $(x).defaults({"content":null,"done":false,"order":0});
+          todo["id"] = newId;
+          redis.set("todo:$newId", todo);
           ctx.sendJson(todo);
         });
       });
-
-      app.delete("/todos/:id", (HttpContext ctx){
-        client.del("todo:${ctx.param('id')}");
-        ctx.send();
+    })
+    
+    .put("/todos/:id", (HttpContext ctx){
+      var id = ctx.params["id"];
+      ctx.readAsJson().then((todo){
+        redis.set("todo:$id", todo);
+        ctx.sendJson(todo);
       });
-
-      print("listening on 8000...");
-      app.listen("127.0.0.1", 8000);
+    })
+    
+    .delete("/todos/:id", (HttpContext ctx){
+      redis.del("todo:${ctx.params['id']}");
+      ctx.send();
+    })
+    
+    .listen("127.0.0.1", 8000);
 
 # API
 
@@ -93,35 +93,36 @@ Then when the server has started, the request handler of the first matching rout
       Express();
 
       //Register a module to be used with this app
-      void use(Module module);
+      Express use(Module module);
 
       //Register a request handler that will be called for a matching GET request
-      get(handlerMapping, RequestHandler handler);
+      Express get(String atRoute, RequestHandler handler);
 
       //Register a request handler that will be called for a matching POST request
-      post(handlerMapping, RequestHandler handler);
+      Express post(String atRoute, RequestHandler handler);
 
       //Register a request handler that will be called for a matching PUT request
-      put(handlerMapping, RequestHandler handler);
+      Express put(String atRoute, RequestHandler handler);
 
       //Register a request handler that will be called for a matching DELETE request
-      delete(handlerMapping, RequestHandler handler);
+      Express delete(String atRoute, RequestHandler handler);
 
       //Register a request handler that will be called for a matching PATCH request
-      patch(handlerMapping, RequestHandler handler);
+      Express patch(String atRoute, RequestHandler handler);
 
       //Register a request handler that will be called for a matching HEAD request
-      head(handlerMapping, RequestHandler handler);
+      Express head(String atRoute, RequestHandler handler);
 
       //Register a request handler that will be called for a matching OPTIONS request
-      options(handlerMapping, RequestHandler handler);
+      Express options(String atRoute, RequestHandler handler);
 
-      // Register a request handler that handles ANY verb
-      any(handlerMapping, RequestHandler handler);
+      //Register a request handler that handles ANY verb
+      Express any(String atRoute, RequestHandler handler);
 
-      // Alias for registering a request handler matching ANY verb
-      void operator []=(String handlerMapping, RequestHandler handler);
+      //Alias for registering a request handler matching ANY verb
+      void operator []=(String atRoute, RequestHandler handler);
 
+      //Can any of the registered routes handle this HttpRequest
       bool handlesRequest(HttpRequest req);
 
       // Return true if this HttpRequest is a match for this verb and route
@@ -129,6 +130,7 @@ Then when the server has started, the request handler of the first matching rout
 
       // When all routes and modules are registered - Start the HttpServer on host:port
       void listen([String host, int port]);
+    }
 
 A high-level object encapsulating both HttpRequest and HttpResponse objects providing useful overloads for common operations and usage patterns.
 

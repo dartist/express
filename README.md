@@ -27,52 +27,52 @@ If you prefer not to add a submodule you can just copy the single, stand-alone [
 
 This is an example of an Redis-powered REST backend Backbones.js demo TODO application:
 
-      RedisClient client = new RedisClient();
+    RedisClient client = new RedisClient();
 
-  Express app = new Express();
-  app
-    .use(new StaticFileHandler())
+    Express app = new Express();
+    app
+      .use(new StaticFileHandler())
 
-    .get("/todos", (HttpContext ctx){
-      redis.keys("todo:*").then((keys) =>
-        redis.mget(keys).then(ctx.sendJson)
-      );
-    })
-    
-    .get("/todos/:id", (HttpContext ctx){
-      var id = ctx.params["id"];
-      redis.get("todo:$id").then((todo) =>
-        todo != null ?
-          ctx.sendJson(todo) :
-          ctx.notFound("todo $id does not exist")
-      );
-    })
-    
-    .post("/todos", (HttpContext ctx){
-      ctx.readAsJson().then((x){
-        redis.incr("ids:todo").then((newId){
-          var todo = $(x).defaults({"content":null,"done":false,"order":0});
-          todo["id"] = newId;
-          redis.set("todo:$newId", todo);
+      .get("/todos", (HttpContext ctx){
+        redis.keys("todo:*").then((keys) =>
+          redis.mget(keys).then(ctx.sendJson)
+        );
+      })
+      
+      .get("/todos/:id", (HttpContext ctx){
+        var id = ctx.params["id"];
+        redis.get("todo:$id").then((todo) =>
+          todo != null ?
+            ctx.sendJson(todo) :
+            ctx.notFound("todo $id does not exist")
+        );
+      })
+      
+      .post("/todos", (HttpContext ctx){
+        ctx.readAsJson().then((x){
+          redis.incr("ids:todo").then((newId){
+            var todo = $(x).defaults({"content":null,"done":false,"order":0});
+            todo["id"] = newId;
+            redis.set("todo:$newId", todo);
+            ctx.sendJson(todo);
+          });
+        });
+      })
+      
+      .put("/todos/:id", (HttpContext ctx){
+        var id = ctx.params["id"];
+        ctx.readAsJson().then((todo){
+          redis.set("todo:$id", todo);
           ctx.sendJson(todo);
         });
-      });
-    })
-    
-    .put("/todos/:id", (HttpContext ctx){
-      var id = ctx.params["id"];
-      ctx.readAsJson().then((todo){
-        redis.set("todo:$id", todo);
-        ctx.sendJson(todo);
-      });
-    })
-    
-    .delete("/todos/:id", (HttpContext ctx){
-      redis.del("todo:${ctx.params['id']}");
-      ctx.send();
-    })
-    
-    .listen("127.0.0.1", 8000);
+      })
+      
+      .delete("/todos/:id", (HttpContext ctx){
+        redis.del("todo:${ctx.params['id']}");
+        ctx.send();
+      })
+      
+      .listen("127.0.0.1", 8000);
 
 # API
 

@@ -1,6 +1,7 @@
-#library("RedisClient");
-#import("dart:io");
-#import("../vendor/Mixins/Mixin.dart");
+library RedisClient;
+import "dart:io";
+import "dart:math" as Math;
+import "package:dartmixins/mixin.dart";
 
 
 class InMemoryRedisClient {
@@ -21,7 +22,8 @@ class InMemoryRedisClient {
   }
 
   Future<Object> get(String key) {
-    Completer<Object> task = new Completer<List<Object>>();
+    //Completer<Object> task = new Completer<List<Object>>();
+    Completer task = new Completer();
     task.complete(_keys[key]);
     return task.future;
   }

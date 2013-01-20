@@ -1,10 +1,10 @@
-#library("ExpressTests");
-#import("dart:io");
-#import("../vendor/Mixins/DUnit.dart");
-#import("../vendor/Mixins/Mixin.dart");
-#import("../Express.dart");
-#import("InMemoryRedisClient.dart");
-#import("JsonClient.dart");
+library ExpressTests;
+import "dart:io";
+import "DUnit.dart";
+import "package:dartmixins/mixin.dart";
+import "package:express/Express.dart";
+import "InMemoryRedisClient.dart";
+import "JsonClient.dart";
 
 ExpressTests() {
 

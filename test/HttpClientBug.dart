@@ -1,5 +1,5 @@
-#import("dart:io");
-#import("dart:json");
+import "dart:io";
+import "dart:json";
 
 main() {
   HttpServer server = new HttpServer();

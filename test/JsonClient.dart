@@ -1,13 +1,13 @@
-#library("JsonClient");
+library JsonClient;
 
-#import("dart:uri");
-#import("dart:io");
-#import("dart:json");
+import "dart:uri";
+import "dart:io";
+import "dart:json";
 
 typedef void RequestFilter(HttpClientRequest httpReq);
 typedef void ResponseFilter(HttpClientResponse httpRes);
 
-interface LogLevel {
+abstract class LogLevel {
   static final int None = 0;
   static final int Error = 1;
   static final int Warn = 2;
@@ -23,7 +23,7 @@ class JsonClient {
   Function onError;
   int logLevel;
 
-  JsonClient(String urlRoot, [this.requestFilter, this.responseFilter])
+  JsonClient(String urlRoot, {this.requestFilter, this.responseFilter})
   {
     baseUri = new Uri.fromString(urlRoot);
     logLevel = LogLevel.Warn;
@@ -43,8 +43,10 @@ class JsonClient {
     if (logLevel >= LogLevel.Error) print(arg);
   }
 
-  Future noSuchMethod(name, args) {
+  Future noSuchMethod(InvocationMirror mirror) {
 
+    var name = mirror.memberName;
+    var args = mirror.positionalArguments;
     var reqData;
     Function successFn, errorFn;
 
@@ -53,13 +55,15 @@ class JsonClient {
       successFn = reqData == null && args[0] is Function ? args[0] : null;
 
       if (args.length > 1) {
-        if (successFn == null)
+        if (successFn == null) {
           successFn = args[1];
-        else
+        } else {
           errorFn = args[1];
+        }
 
-        if (args.length > 2)
+        if (args.length > 2) {
           errorFn = args[2];
+        }
       }
     }
 
@@ -68,9 +72,9 @@ class JsonClient {
     if (reqData is Map || reqData is List) {
       postData = reqData;
     } else if (reqData != null) {
-      url += "$reqData".startsWith("?")
-        ? reqData
-        : "/$reqData";
+      url = "$reqData".startsWith("?")
+        ? "${url}reqData"
+        : "${url}/$reqData";
     }
 
     String httpMethod = postData == null ? 'GET' : 'POST';
@@ -93,21 +97,24 @@ class JsonClient {
   void _notifyError (Completer task, e, [String msg, Function errorFn]) {
     HttpClientResponse httpRes = e is HttpClientResponse ? e : null;
     HttpException httpEx = e is HttpException ? e : null;
-    if (httpRes != null)
+    if (httpRes != null) {
       logInfo("HttpResponse(${httpRes.statusCode}): ${httpRes.reasonPhrase}. msg:$msg");
-    else if (httpEx != null)
+    } else if (httpEx != null) {
       logError("HttpException($msg): ${httpEx.message}");
-    else
+    } else {
       logError("_notifyError($msg): ${e.toString()}");
+    }
 
-    if (errorFn != null)
+    if (errorFn != null) {
       errorFn(e);
-    if (onError != null)
+    }
+    if (onError != null) {
       onError(e);
+    }
 
     try {
       task.completeException(e);
-    } catch (var ex){
+    } catch (ex){
       logError("Error on task.completeException(e): $ex. Return true in ExHandler to mark as handled");
     }
   }
@@ -121,7 +128,7 @@ class JsonClient {
     bool isUrl = url.startsWith("http");
     Uri uri = isUrl ? new Uri.fromString(url) : baseUri;
     String path = isUrl
-      ? uri.path + uri.query
+      ? "${uri.path}${uri.query}"
       : url.startsWith("/")
         ? url
         : "${uri.path}/${url}";
@@ -195,23 +202,23 @@ class JsonClient {
 
         try {
           client.shutdown();
-        } catch(var e){ _notifyError(task, e, " on shutdown()", errorFn); return; }
+        } catch(e){ _notifyError(task, e, " on shutdown()", errorFn); return; }
 
         Object response = null;
-        if (buffer != null && !buffer.isEmpty()) {
+        if (buffer != null && !buffer.isEmpty) {
           String data = buffer.toString();
           try {
             logDebug("RECV onData: $data");
             response = JSON.parse(data);
           }
-          catch (final e) { _notifyError(task, e, "Error Parsing: $data", errorFn); return; }
+          catch (e) { _notifyError(task, e, "Error Parsing: $data", errorFn); return; }
         }
 
         if (httpRes.statusCode < 400) {
           try {
             task.complete(response);
             if (successFn != null) successFn(response);
-          } catch (final e) { logError(e); return; }
+          } catch (e) { logError(e); return; }
         } else {
           _notifyError(task, httpRes, "Error statusCode: ${httpRes.statusCode}", errorFn);
           return;

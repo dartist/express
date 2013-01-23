@@ -105,8 +105,7 @@ ExpressTests() {
                     }
 
                     var future = client.todos(id);
-                    future.then(cb);
-                    future.catchError((AsyncError e, [Object stackTrace]){
+                    future.then(cb).catchError((AsyncError e, [Object stackTrace]){
                       cb(e.error.statusCode);
                       return true;
                     });

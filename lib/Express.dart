@@ -1,7 +1,8 @@
 library Express;
 import "dart:io";
-import "dart:json";
+import "dart:json" as JSON;
 import "dart:scalarlist";
+import "dart:async";
 import "package:dartmixins/mixin.dart";
 
 /*
@@ -207,13 +208,13 @@ class _HttpContext implements HttpContext {
       var chunk = stream.read();
       chunks.add(chunk);
     };
-    stream.onError = completer.completeException;
+    stream.onError = completer.completeError;
     return completer.future;
   }
 
   Future<String> readAsText([Encoding encoding = Encoding.UTF_8]) {
 //    var decoder = _StringDecoders.decoder(encoding);
-    return readAsBytes().transform((bytes) {
+    return readAsBytes().then((bytes) {
       return new String.fromCharCodes(bytes);
 //      decoder.write(bytes);
 //      return decoder.decoded;
@@ -221,10 +222,10 @@ class _HttpContext implements HttpContext {
   }
 
   Future<Object> readAsJson({Encoding encoding: Encoding.UTF_8}) =>
-      readAsText(encoding).transform((json) => JSON.parse(json));
+      readAsText(encoding).then((json) => JSON.parse(json));
 
   Future<Object> readAsObject([Encoding encoding = Encoding.UTF_8]) =>
-      readAsText(encoding).transform((text) => ContentTypes.isJson(contentType)
+      readAsText(encoding).then((text) => ContentTypes.isJson(contentType)
            ? $(JSON.parse(text)).defaults(req.queryParameters)
            : text
       );

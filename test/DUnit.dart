@@ -18,7 +18,7 @@ Map<String,List<_TestTuple>> _moduleTests;
 Map<String,Function> _modulesStartup;
 Map<String,Function> _modulesTeardown;
 String _moduleName;
-module (name, [Function startup(Function cb), Function teardown]) {
+module (name, {Function startup(Function cb), Function teardown}) {
   if (_moduleTests == null) _moduleTests = new Map<String,List<_TestTuple>>();
   if (_modulesStartup == null) _modulesStartup = new Map<String,Function>();
   if (_modulesTeardown == null) _modulesTeardown = new Map<String,Function>();
@@ -113,7 +113,7 @@ runAllTests({bool hidePassedTests: false}){
       String error = null;
 
       int total = _testAssertions.length;
-      int failed = _testAssertions.filter((x) => !x.success()).length;
+      int failed = _testAssertions.where((x) => !x.success()).toList().length;
       int success = total - failed;
 
       totalTests  += total;

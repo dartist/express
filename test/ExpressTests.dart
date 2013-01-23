@@ -1,6 +1,7 @@
 library ExpressTests;
 import "dart:io";
 import "DUnit.dart";
+import "dart:async";
 import "package:dartmixins/mixin.dart";
 import "package:express/Express.dart";
 import "InMemoryRedisClient.dart";
@@ -105,7 +106,7 @@ ExpressTests() {
 
                     var future = client.todos(id);
                     future.then(cb);
-                    future.handleException((HttpClientResponse e){
+                    future.catchError((AsyncError e, [Object stackTrace]){
                       cb(e.statusCode);
                       return true;
                     });

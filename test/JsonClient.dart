@@ -2,7 +2,8 @@ library JsonClient;
 
 import "dart:uri";
 import "dart:io";
-import "dart:json";
+import "dart:json" as JSON;
+import "dart:async";
 
 typedef void RequestFilter(HttpClientRequest httpReq);
 typedef void ResponseFilter(HttpClientResponse httpRes);
@@ -91,7 +92,7 @@ class JsonClient {
   Future put (url, [data, success, error]) =>
     ajax('PUT', url, data, success, error);
 
-  Future delete (url, [success, error]) =>
+  Future delete (url, {success, error}) =>
     ajax('DELETE', url, null, success, error);
 
   void _notifyError (Completer task, e, [String msg, Function errorFn]) {
@@ -113,9 +114,9 @@ class JsonClient {
     }
 
     try {
-      task.completeException(e);
+      task.completeError(e);
     } catch (ex){
-      logError("Error on task.completeException(e): $ex. Return true in ExHandler to mark as handled");
+      logError("Error on task.completeError(e): $ex. Return true in ExHandler to mark as handled");
     }
   }
 

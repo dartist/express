@@ -12,7 +12,7 @@ Follow [@demisbellot](http://twitter.com/demisbellot) for updates.
 
 This will be made available on the Dart Package Manager when its ready, until then you can easily make use of this library by adding it as a submodule at your projects root:
 
-    git submodule add git@github.com:mythz/DartExpress.git vendor/Express
+    git submodule add git@github.com:Dartist/Express.git vendor/Express
     cd vendor/Express
     git submodule init
     git submodule update    
@@ -21,7 +21,7 @@ Then you can pull future project updates with a git pull in the submodule direct
 
     git pull origin master    
 
-If you prefer not to add a submodule you can just copy the single, stand-alone [Express.dart](https://github.com/mythz/DartExpress/blob/master/Express.dart) file. 
+If you prefer not to add a submodule you can just copy the single, stand-alone [Express.dart](https://github.com/Dartist/Express/blob/master/Express.dart) file. 
 
 ## Example Usage
 
@@ -181,6 +181,7 @@ Serve static files for requests that don't match any defined routes:
 ## Contributors
 
   - [mythz](https://github.com/mythz) (Demis Bellot)
+  - [financeCoding](https://github.com/financeCoding) (Adam Singer)
 
 ### Feedback 
 

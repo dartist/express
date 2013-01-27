@@ -56,6 +56,9 @@ abstract class Express {
 
   // When all routes and modules are registered - Start the HttpServer on host:port
   void listen([String host, int port]);
+
+  // Shutdown the server
+  void shutdown();
 }
 
 /* A high-level object encapsulating both HttpRequest and HttpResponse objects
@@ -176,6 +179,12 @@ class _Express implements Express {
     );
     _modules.forEach((module) => module.register(server));
     server.listen(host, port);
+  }
+
+  void shutdown() {
+    if (server != null) {
+      server.close();
+    }
   }
 }
 

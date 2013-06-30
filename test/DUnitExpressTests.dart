@@ -2,7 +2,7 @@ import "DUnit.dart";
 import "dart:io";
 import "dart:async";
 import "package:dartmixins/mixin.dart";
-import "package:express/Express.dart";
+import "../lib/express.dart";
 import "InMemoryRedisClient.dart";
 import "package:json_client/json_client.dart";
 

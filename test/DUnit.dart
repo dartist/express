@@ -1,5 +1,7 @@
 library DUnit;
 
+import "dart:collection";
+
 // TODO: refactor into seperate library.
 
 /*

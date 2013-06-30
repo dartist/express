@@ -1,7 +1,8 @@
 library Express;
 import "dart:io";
 import "dart:json" as JSON;
-import "dart:scalarlist";
+import "dart:collection";
+import "dart:typed_data";
 import "dart:async";
 import "package:dartmixins/mixin.dart";
 
@@ -9,7 +10,7 @@ import "package:dartmixins/mixin.dart";
  * Register encapsulated Modules like StaticFileHandler
  */
 abstract class Module {
-  void register(HttpServer server);
+  void register(Express server);
 }
 
 /* The core Express API upon which all the Apps modules and request handlers are registered on
@@ -44,6 +45,10 @@ abstract class Express {
 
   //Register a request handler that handles ANY verb
   Express any(String atRoute, RequestHandler handler);
+  
+  //Register a custom request handler. Execute requestHandler, if matcher is true.
+  //If priority < 0, custom handler will be executed before route handlers, otherwise after. 
+  void addRequestHandler(bool matcher(HttpRequest req), void requestHandler(HttpContext ctx), {int priority:0});
 
   //Alias for registering a request handler matching ANY verb
   void operator []=(String atRoute, RequestHandler handler);
@@ -55,22 +60,26 @@ abstract class Express {
   bool isMatch(String verb, String route, HttpRequest req);
 
   // When all routes and modules are registered - Start the HttpServer on host:port
-  void listen([String host, int port]);
+  Future<HttpServer> listen([String host, int port]);
+  
+  /// Permanently stops this [HttpServer] from listening for new connections.
+  /// This closes this [Stream] of [HttpRequest]s with a done event.
+  void close();
 }
 
 /* A high-level object encapsulating both HttpRequest and HttpResponse objects
  * with useful overloads for each for common operations and usage patterns.
  */
 abstract class HttpContext {
-  factory HttpContext(HttpRequest req, HttpResponse res, [String routePath]) {
-    return new _HttpContext(req, res, routePath);
+  factory HttpContext(HttpRequest req, [String routePath]) {
+    return new _HttpContext(req, req.response, routePath);
   }
 
   //Context
   String routePath;
   HttpRequest  req;
   HttpResponse res;
-  Map<String,String> params;
+  Map<String,String> get params;
 
   //Read
   String get contentType;
@@ -101,16 +110,27 @@ abstract class HttpContext {
 // The signature your Request Handlers should implement
 typedef void RequestHandler (HttpContext ctx);
 
+typedef bool RequestHandlerMatcher (HttpRequest req);
+
+class RequestHandlerEntry {
+  RequestHandlerMatcher matcher;
+  RequestHandler handler;
+  int priority;
+  RequestHandlerEntry(this.matcher, this.handler, this.priority);
+}
+
 class _Express implements Express {
   Map<String, LinkedHashMap<String,RequestHandler>> _verbPaths;
   List<String> _verbs = const ["GET","POST","PUT","DELETE","PATCH","HEAD","OPTIONS","ANY"];
   List<Module> _modules;
   HttpServer server;
+  List<RequestHandlerEntry> _customHandlers; 
 
   _Express() {
     _verbPaths = new Map<String, LinkedHashMap<String,RequestHandler>>();
     _verbs.forEach((x) => _verbPaths[x] = {});
     _modules = new List<Module>();
+    _customHandlers = new List<RequestHandlerEntry>();
   }
 
   Express _addHandler(String verb, String atRoute, RequestHandler handler){
@@ -155,28 +175,58 @@ class _Express implements Express {
 
   bool handlesRequest(HttpRequest req) {
     bool foundMatch = _verbPaths[req.method] != null &&
-    ( _verbPaths[req.method].keys.some((x) => routeMatches(x, req.path))
-      || _verbPaths["ANY"].keys.some((x) => routeMatches(x, req.path)) );
-    if (foundMatch) print("match found for ${req.method} ${req.path}");
+    ( _verbPaths[req.method].keys.any((x) => routeMatches(x, req.uri.path))
+      || _verbPaths["ANY"].keys.any((x) => routeMatches(x, req.uri.path)) );
+    if (foundMatch) print("match found for ${req.method} ${req.uri.path}");
     return foundMatch;
   }
 
   // Return true if this HttpRequest is a match for this verb and route
   bool isMatch(String verb, String route, HttpRequest req) =>
-      (req.method == verb || verb == "ANY") && routeMatches(route, req.path);
+      (req.method == verb || verb == "ANY") && routeMatches(route, req.uri.path);
 
-  void listen([String host="127.0.0.1", int port=80]){
-    server = new HttpServer();
-    _verbPaths.forEach((verb, handlers) =>
-        handlers.forEach((route, handler) =>
-            server.addRequestHandler((HttpRequest req) => isMatch(verb, route, req),
-              (HttpRequest req, HttpResponse res) { handler(new HttpContext(req, res, route)); }
-            )
-        )
-    );
-    _modules.forEach((module) => module.register(server));
-    server.listen(host, port);
+  void addRequestHandler(bool matcher(HttpRequest req), void requestHandler(HttpContext ctx), {int priority:0}) {
+    _customHandlers.add(new RequestHandlerEntry(matcher, requestHandler, priority));
   }
+  
+  Future<HttpServer> listen([String host="127.0.0.1", int port=80]){
+    return HttpServer.bind(host, port).then((HttpServer x) {
+      server = x;
+      _modules.forEach((module) => module.register(this));
+      
+      server.listen((HttpRequest req){
+        for (RequestHandlerEntry customHandler in _customHandlers
+            .where((x) => x.priority < 0)){
+          if (customHandler.matcher(req)){
+            customHandler.handler(req);
+            return;
+          }            
+        }
+        
+        for (var verb in _verbPaths.keys){
+          var handlers = _verbPaths[verb];
+          for (var route in handlers.keys){
+            if (isMatch(verb, route, req)){
+              var handler = handlers[route];              
+              handler(new HttpContext(req, route));
+              return;
+            }
+          }            
+        }
+        
+        for (RequestHandlerEntry customHandler in _customHandlers
+            .where((x) => x.priority >= 0)){
+          if (customHandler.matcher(req)){
+            customHandler.handler(req);
+            return;
+          }            
+        }
+      });
+    });
+  }
+  
+  void close() =>
+    server.close();
 }
 
 class _HttpContext implements HttpContext {
@@ -192,33 +242,37 @@ class _HttpContext implements HttpContext {
 
   Map<String,String> get params{
     if (_params == null){
-      _params = $(pathMatcher(routePath, req.path)).addAll(req.queryParameters);
+      _params = $(pathMatcher(routePath, req.uri.path)).addAll(req.uri.queryParameters);
     }
     return _params;
   }
 
   Future<List<int>> readAsBytes() {
-    Completer<List<int>> completer = new Completer<List<int>>();
-    var stream = req.inputStream;
-    var chunks = new _BufferList();
-    stream.onClosed = () {
-      completer.complete(chunks.readBytes(chunks.length));
-    };
-    stream.onData = () {
-      var chunk = stream.read();
-      chunks.add(chunk);
-    };
-    stream.onError = completer.completeError;
+    var completer = new Completer<List<int>>();
+    
+    var buf = new Uint8List(req.contentLength);
+    req.listen(buf.addAll)
+    ..onError(completer.completeError)
+    ..onDone((){      
+      completer.complete(buf);
+    });
+      
     return completer.future;
   }
 
   Future<String> readAsText([Encoding encoding = Encoding.UTF_8]) {
-//    var decoder = _StringDecoders.decoder(encoding);
-    return readAsBytes().then((bytes) {
-      return new String.fromCharCodes(bytes);
-//      decoder.write(bytes);
-//      return decoder.decoded;
-    });
+    var completer = new Completer<String>();
+    
+    var buf = new StringBuffer();
+    req
+      .transform(new StringDecoder(encoding))
+      .listen(buf.write)
+      ..onError(completer.completeError)
+      ..onDone((){      
+        completer.complete(buf.toString());
+      });
+      
+    return completer.future;
   }
 
   Future<Object> readAsJson({Encoding encoding: Encoding.UTF_8}) =>
@@ -226,7 +280,7 @@ class _HttpContext implements HttpContext {
 
   Future<Object> readAsObject([Encoding encoding = Encoding.UTF_8]) =>
       readAsText(encoding).then((text) => ContentTypes.isJson(contentType)
-           ? $(JSON.parse(text)).defaults(req.queryParameters)
+           ? $(JSON.parse(text)).defaults(req.uri.queryParameters)
            : text
       );
 
@@ -265,13 +319,13 @@ class _HttpContext implements HttpContext {
     if (value != null){
       switch(_contentTypeOnly){
         case ContentTypes.JSON:
-          res.outputStream.writeString(JSON.stringify(value));
+          res.write(JSON.stringify(value));
         break;
         default:
           if (value is List<int> || ContentTypes.isBinary(_contentTypeOnly)) {
-            res.outputStream.write(value);
+            res.write(value);
           } else {
-            res.outputStream.writeString(value.toString());
+            res.write(value.toString());
           }
           break;
       }
@@ -280,19 +334,19 @@ class _HttpContext implements HttpContext {
   }
 
   HttpContext writeText(String text){
-    res.outputStream.writeString(text);
+    res.write(text);
     return this;
   }
 
   HttpContext writeBytes(List<int> bytes){
-    res.outputStream.write(bytes);
+    res.write(bytes);
     return this;
   }
 
   void send({Object value, String contentType, int httpStatus, String statusReason}){
     head(httpStatus, statusReason, contentType);
     if (value != null) write(value);
-    res.outputStream.close();
+    res.close();
   }
 
   void sendJson(Object value, {int httpStatus, String statusReason}) =>
@@ -303,14 +357,14 @@ class _HttpContext implements HttpContext {
 
   void sendText(Object value, {String contentType, int httpStatus, String statusReason}){
     head(httpStatus, statusReason, contentType);
-    if (value != null) res.outputStream.writeString(value);
-    res.outputStream.close();
+    if (value != null) res.write(value);
+    res.close();
   }
 
   void sendBytes(List<int> bytes, {String contentType, int httpStatus, String statusReason}){
     head(httpStatus, statusReason, contentType);
-    if (bytes != null) res.outputStream.write(bytes);
-    res.outputStream.close();
+    if (bytes != null) res.write(bytes);
+    res.close();
   }
 
   void notFound([String statusReason, Object value, String contentType]) =>
@@ -366,7 +420,7 @@ class ContentTypes {
   }
 
   static String getContentType(File file) {
-    String ext = file.name.split('.').last;
+    String ext = file.path.split('.').last;
     return extensionsMap[ext];
   }
 
@@ -382,27 +436,28 @@ class ContentTypes {
 
 class StaticFileHandler implements Module {
 
-  void register(HttpServer server) =>
-      server.addRequestHandler((_) => true, (req, res) => execute(new HttpContext(req, res)));
+  void register(Express server) =>
+      server.addRequestHandler((_) => true, (req) => execute(new HttpContext(req)));
 
   void execute(HttpContext ctx){
-    String path = (ctx.req.path.endsWith('/')) ? ".${ctx.req.path}index.html" : ".${ctx.req.path}";
+    String path = (ctx.req.uri.path.endsWith('/')) ? ".${ctx.req.uri.path}index.html" : ".${ctx.req.uri.path}";
     print("serving $path");
 
     File file = new File(path);
     file.exists().then((bool exists) {
       if (exists) {
-        ctx.responseContentType = ContentTypes.getContentType(file);
-        if (ContentTypes.isBinary(ctx.responseContentType)){
-          file.readAsBytes().then(ctx.sendBytes);
-        } else {
-          file.readAsString().then(ctx.sendText);
-        }
+        ctx.responseContentType = ContentTypes.getContentType(file);        
+        file.fullPath().then((String fullPath) {
+          file.openRead()
+          .pipe(ctx.res)
+          .catchError((e) { });
+        });
       } else {
         ctx.notFound("$path not found on this server");
       }
     });
   }
+
 }
 
 bool routeMatches(String route, String matchesPath) => pathMatcher(route, matchesPath) != null;
@@ -426,109 +481,4 @@ Map<String,String> pathMatcher(String routePath, String matchesPath){
     return params;
   }
   return null;
-}
-
-class _BufferList {
-  _BufferList() {
-    clear();
-  }
-
-  void add(List<int> buffer, {int offset: 0}) {
-    assert(offset == 0 || _buffers.isEmpty);
-    _buffers.addLast(buffer);
-    _length += buffer.length;
-    if (offset != 0) _index = offset;
-  }
-
-  List<int> get first => _buffers.first;
-
-  int get index =>  _index;
-
-  int peek() => _buffers.first[_index];
-
-  int next() {
-    int value = _buffers.first[_index++];
-    _length--;
-    if (_index == _buffers.first.length) {
-      _buffers.removeFirst();
-      _index = 0;
-    }
-    return value;
-  }
-
-  List<int> readBytes(int count) {
-    List<int> result;
-    if (_length == 0 || _length < count) return null;
-    if (_index == 0 && _buffers.first.length == count) {
-      result = _buffers.first;
-      _buffers.removeFirst();
-      _index = 0;
-      _length -= count;
-      return result;
-    } else {
-      int firstRemaining = _buffers.first.length - _index;
-      if (firstRemaining >= count) {
-        result = _buffers.first.getRange(_index, count);
-        _index += count;
-        _length -= count;
-        if (_index == _buffers.first.length) {
-          _buffers.removeFirst();
-          _index = 0;
-        }
-        return result;
-      } else {
-        result = new Uint8List(count);
-        int remaining = count;
-        while (remaining > 0) {
-          int bytesInFirst = _buffers.first.length - _index;
-          if (bytesInFirst <= remaining) {
-            result.setRange(count - remaining,
-                            bytesInFirst,
-                            _buffers.first,
-                            _index);
-            _buffers.removeFirst();
-            _index = 0;
-            _length -= bytesInFirst;
-            remaining -= bytesInFirst;
-          } else {
-            result.setRange(count - remaining,
-                            remaining,
-                            _buffers.first,
-                            _index);
-            _index = remaining;
-            _length -= remaining;
-            remaining = 0;
-            assert(_index < _buffers.first.length);
-          }
-        }
-        return result;
-      }
-    }
-  }
-
-  void removeBytes(int count) {
-    int firstRemaining = first.length - _index;
-    assert(count <= firstRemaining);
-    if (count == firstRemaining) {
-      _buffers.removeFirst();
-      _index = 0;
-    } else {
-      _index += count;
-    }
-    _length -= count;
-  }
-
-  int get length => _length;
-
-  bool isEmpty() => _buffers.isEmpty;
-
-  void clear() {
-    _index = 0;
-    _length = 0;
-    _buffers = new Queue();
-  }
-
-  int _length;  // Total number of bytes remaining in the buffers.
-  Queue<List<int>> _buffers;  // List of data buffers.
-  int _index;  // Index of the next byte in the first buffer.
 }

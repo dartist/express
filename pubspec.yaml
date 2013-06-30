@@ -1,6 +1,8 @@
-name:  express
-description:  A sample application
-
+name: express
+description: A sample application
 dependencies:
   dartmixins: any
+  json_client: any
+  unittest: any
+
 #  unittest: any

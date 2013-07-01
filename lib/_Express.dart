@@ -9,7 +9,7 @@ class RequestHandlerEntry {
   RequestHandlerEntry(this.matcher, this.handler, this.priority);
 }
 
-String __dirname = new File('.').fullPathSync();
+String __dirname = Directory.current.toString();
 
 class _Express implements Express {
   Map<String, LinkedHashMap<String,RequestHandler>> _verbPaths;

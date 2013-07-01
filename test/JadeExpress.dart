@@ -1,5 +1,5 @@
 import "package:jaded/jaded.dart";
-import "../lib/express.dart";
+import "package:express/express.dart";
 import "dart:io";
 
 main(){

@@ -6,24 +6,50 @@ Also included is a single static file server module.
 
 This library will eventually expand to help with other common usage patterns and features as and when needed.
 
-Follow [@demisbellot](http://twitter.com/demisbellot) for updates.
+## [Installing via Pub](http://pub.dartlang.org/packages/express)	
 
-## Download 
+Add this to your package's pubspec.yaml file:
 
-This will be made available on the Dart Package Manager when its ready, until then you can easily make use of this library by adding it as a submodule at your projects root:
+	dependencies:
+	  express: 0.1.0
 
-    git submodule add git@github.com:Dartist/Express.git vendor/Express
-    cd vendor/Express
-    git submodule init
-    git submodule update    
 
-Then you can pull future project updates with a git pull in the submodule directory, e.g:
+## Example Usages
 
-    git pull origin master    
+### [Basic Jade and Express app](https://github.com/dartist/express/blob/master/test/JadeExpress.dart)
 
-If you prefer not to add a submodule you can just copy the single, stand-alone [Express.dart](https://github.com/Dartist/Express/blob/master/Express.dart) file. 
+```dart
+import "package:jaded/jaded.dart";
+import "package:express/express.dart";
+import "dart:io";
 
-## Example Usage
+main(){
+  int counter = 0;
+  var app = new Express()
+    ..use(new JadeViewEngine())
+    ..use(new StaticFileHandler("public"))
+    
+    ..get('/', (HttpContext ctx){
+      ctx.render('index', {'title': 'Home'});
+    })
+  
+    ..get('/counter', (HttpContext ctx){
+      ctx.sendJson({'counter': counter++});
+    });
+
+ app.listen("127.0.0.1", 8000);
+}
+```
+
+Static files used by this app 
+
+  - [/public/stylesheets](https://github.com/dartist/express/tree/master/test/public/stylesheets)
+    - style.css
+  - [/views](https://github.com/dartist/express/tree/master/test/views)
+	- index.jade
+	- layout.jade
+
+### [Backbone Todo's JSON Server](https://github.com/dartist/express/blob/master/test/ExpressTests.dart#L42) 
 
 This is an example of an Redis-powered REST backend Backbones.js demo TODO application:
 
@@ -193,13 +219,33 @@ abstract class HttpContext {
 
 ## Modules
 
+### JadeViewEngine
+
+Register the jaded view engine to render HTML views
+
+```dart
+app.use(new JadeViewEngine());
+```
+
+#### Usage
+
+```dart
+app.get('/', (HttpContext ctx){
+  ctx.render('index', {'title': 'Home'});
+})
+```
+
+Renders the `/views/index.jade` view with the `{'title': 'Home'}` view model. 
+
 ### StaticFileHandler
 
 Serve static files for requests that don't match any defined routes:
 
 ```dart
-app.use(new StaticFileHandler());
+app.use(new StaticFileHandler('public'));
 ```
+
+Serves static files from the `/public` folder.
 
 -----
 

@@ -1,4 +1,4 @@
-DartExpress
+Dart Express
 ===========
 
 A simple, thin [expressjs](http://expressjs.com/) inspired layer around Dart's primitive HttpServer APIs. 

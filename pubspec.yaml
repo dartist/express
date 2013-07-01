@@ -1,5 +1,8 @@
 name: express
-description: A sample application
+version: 0.1.0
+author: Demis Bellot<demis.bellot@gmail.com>
+description: A thin express-js inspired layer around Dart's primitive HttpServer APIs with JSON and Jade HTML view engine support
+homepage: https://github.com/dartist/express
 dependencies:
   dartmixins: any
   jaded: any

@@ -11,8 +11,17 @@ class ContentTypes {
   static const String JS = "application/javascript";
   static const String JSON = "application/json";
   static const String XML = "application/xml";
-  static const String FORM_URL_ENCODED = "x-www-form-urlencoded";
+  static const String FORM_URL_ENCODED = "application/x-www-form-urlencoded";
   static const String MULTIPART_FORMDATA = "multipart/form-data";
+
+  static ContentType TEXT_TYPE = ContentType.parse(TEXT);
+  static ContentType HTML_TYPE = ContentType.parse(HTML);
+  static ContentType CSS_TYPE = ContentType.parse(CSS);
+  static ContentType JS_TYPE = ContentType.parse(JS);
+  static ContentType JSON_TYPE = ContentType.parse(JSON);
+  static ContentType XML_TYPE = ContentType.parse(XML);
+  static ContentType FORM_URL_ENCODED_TYPE = ContentType.parse(FORM_URL_ENCODED);
+  static ContentType MULTIPART_FORMDATA_TYPE = ContentType.parse(MULTIPART_FORMDATA);
 
   static bool isJson(String contentType) => matches(contentType, JSON);
   static bool isText(String contentType) => matches(contentType, TEXT);

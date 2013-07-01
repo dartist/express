@@ -1,0 +1,20 @@
+!!!5
+html
+  head
+    title #{title} - My Site
+    link(rel='stylesheet', href='/stylesheets/style.css')
+  body
+    header
+      h1 My Site
+    .container
+      .main-content
+        block content
+      .sidebar
+        block sidebar
+    footer
+      p Running on 
+        a(href='http://www.dartlang.org/') dart 
+        | with 
+        a(href='https://github.com/dartist/express') express 
+        | and 
+        a(href='https://github.com/dartist/jaded') jaded 

@@ -9,18 +9,23 @@ class RequestHandlerEntry {
   RequestHandlerEntry(this.matcher, this.handler, this.priority);
 }
 
+String __dirname = new File('.').fullPathSync();
+
 class _Express implements Express {
   Map<String, LinkedHashMap<String,RequestHandler>> _verbPaths;
   List<String> _verbs = const ["GET","POST","PUT","DELETE","PATCH","HEAD","OPTIONS","ANY"];
   List<Module> _modules;
   HttpServer server;
   List<RequestHandlerEntry> _customHandlers; 
+  Map<String,String> configs = {};
 
   _Express() {
     _verbPaths = new Map<String, LinkedHashMap<String,RequestHandler>>();
     _verbs.forEach((x) => _verbPaths[x] = {});
     _modules = new List<Module>();
     _customHandlers = new List<RequestHandlerEntry>();
+    config('basedir', __dirname);
+    config('views', 'views');
   }
 
   Express _addHandler(String verb, String atRoute, RequestHandler handler){
@@ -28,6 +33,13 @@ class _Express implements Express {
     return this;
   }
 
+  void config(String name, String value){
+    configs[name] = value;
+  }
+  
+  String getConfig(String name) =>
+    configs[name];
+  
   // Use this to add a module to your project
   Express use(Module module){
     _modules.add(module);
@@ -77,6 +89,24 @@ class _Express implements Express {
 
   void addRequestHandler(bool matcher(HttpRequest req), void requestHandler(HttpContext ctx), {int priority:0}) {
     _customHandlers.add(new RequestHandlerEntry(matcher, requestHandler, priority));
+    _customHandlers.sort((x,y) => x.priority - y.priority);
+  }
+
+  Future<bool> render(HttpContext ctx, String viewName, [dynamic viewModel]){
+    var completer = new Completer();
+    List<Formatter> formatters = _modules.where((x) => x is Formatter).toList();
+    
+    doNext(){
+      if (formatters.length > 0){
+        var formatter = formatters.removeAt(0);
+        formatter.render(ctx, viewModel, viewName)
+          .then((handled) => handled ? completer.complete(true) : doNext())
+          .catchError(completer.completeError);        
+      } else {
+        completer.complete(false);
+      }
+    };
+    doNext();
   }
   
   Future<HttpServer> listen([String host="127.0.0.1", int port=80]){
@@ -85,10 +115,10 @@ class _Express implements Express {
       _modules.forEach((module) => module.register(this));
       
       server.listen((HttpRequest req){
-        for (RequestHandlerEntry customHandler in _customHandlers
-            .where((x) => x.priority < 0)){
+        for (RequestHandlerEntry customHandler in 
+            _customHandlers.where((x) => x.priority < 0)){
           if (customHandler.matcher(req)){
-            customHandler.handler(req);
+            customHandler.handler(new HttpContext(this, req));
             return;
           }            
         }
@@ -98,7 +128,7 @@ class _Express implements Express {
           for (var route in handlers.keys){
             if (isMatch(verb, route, req)){
               var handler = handlers[route];              
-              handler(new HttpContext(req, route));
+              handler(new HttpContext(this, req, route));
               return;
             }
           }            
@@ -107,11 +137,15 @@ class _Express implements Express {
         for (RequestHandlerEntry customHandler in _customHandlers
             .where((x) => x.priority >= 0)){
           if (customHandler.matcher(req)){
-            customHandler.handler(req);
+            customHandler.handler(new HttpContext(this, req));
             return;
           }            
         }
+        
+        new HttpContext(this, req).notFound("not found","'${req.uri.path}' was not found.");
       });
+      
+      logInfo("listening on http://$host:$port");
     });
   }
   

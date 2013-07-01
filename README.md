@@ -98,6 +98,12 @@ Then when the server has started, the request handler of the first matching rout
 ```dart
 abstract class Express {
 
+  //Gets a config setting
+  String getConfig(String name);
+  
+  //Sets a config setting
+  void setConfig(String name, String value);
+
   //Register a module to be used with this app
   Express use(Module module);
 

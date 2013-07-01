@@ -8,8 +8,9 @@ class _HttpContext implements HttpContext {
   HttpResponse res;
   Map<String,String> _params;
   String _format;
+  Express express;
 
-  _HttpContext(HttpRequest this.req, HttpResponse this.res, [String this.routePath]);
+  _HttpContext(this.express, this.req, this.res, [this.routePath]);
 
   Map<String,String> get params{
     if (_params == null){
@@ -140,4 +141,9 @@ class _HttpContext implements HttpContext {
 
   void notFound([String statusReason, Object value, String contentType]) =>
       send(value: value, contentType: contentType, httpStatus: HttpStatus.NOT_FOUND, statusReason: statusReason);
+
+  void render(String viewName, [dynamic viewModel]){
+    express.render(this, viewName, viewModel);
+  }
+  
 }

@@ -5,15 +5,18 @@ import "dart:json" as JSON;
 import "dart:collection";
 import "dart:typed_data";
 import "dart:async";
-import "package:dartmixins/mixin.dart";
 
-part "ContentTypes.dart";
-part "_Express.dart";
-part "_HttpContext.dart";
+import "package:dartmixins/mixin.dart";
+import "package:jaded/jaded.dart" as jaded;
+import "path.dart";
+
+part "content_types.dart";
+part "_express.dart";
+part "_http_context.dart";
 part "utils.dart";
 
-part "modules/StaticFileHandler.dart";
-
+part "modules/static_file_handler.dart";
+part "modules/jade_view_engine.dart";
 
 /*
  * Register encapsulated Modules like StaticFileHandler
@@ -27,6 +30,12 @@ abstract class Module {
  */
 abstract class Express {
   factory Express() = _Express;
+  
+  //Sets a config setting
+  void config(String name, String value);
+
+  //Gets a config setting
+  String getConfig(String name);
 
   //Register a module to be used with this app
   Express use(Module module);
@@ -71,6 +80,8 @@ abstract class Express {
   // When all routes and modules are registered - Start the HttpServer on host:port
   Future<HttpServer> listen([String host, int port]);
   
+  Future<bool> render(HttpContext ctx, String, [dynamic viewModel]);
+  
   /// Permanently stops this [HttpServer] from listening for new connections.
   /// This closes this [Stream] of [HttpRequest]s with a done event.
   void close();
@@ -80,8 +91,8 @@ abstract class Express {
  * with useful overloads for each for common operations and usage patterns.
  */
 abstract class HttpContext {
-  factory HttpContext(HttpRequest req, [String routePath]) =>
-    new _HttpContext(req, req.response, routePath);
+  factory HttpContext(Express express, HttpRequest req, [String routePath]) =>
+    new _HttpContext(express, req, req.response, routePath);
 
   //Context
   String routePath;
@@ -113,7 +124,17 @@ abstract class HttpContext {
 
   //Custom Status responses
   void notFound([String statusReason, Object value, String contentType]);
+
+  //Format response with the default renderer
+  void render(String, [dynamic viewModel]);
 }
 
 // The signature your Request Handlers should implement
 typedef void RequestHandler (HttpContext ctx);
+
+// Register different Formatters
+abstract class Formatter implements Module {
+  String get contentType;
+  String get format => contentType.split("/").last;
+  Future<bool> render(HttpContext ctx, dynamic viewModel, [String viewName]);
+}

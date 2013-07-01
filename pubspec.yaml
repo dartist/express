@@ -2,6 +2,7 @@ name: express
 description: A sample application
 dependencies:
   dartmixins: any
+  jaded: any
   json_client: any
   unittest: any
 

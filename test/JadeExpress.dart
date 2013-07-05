@@ -1,11 +1,12 @@
-import "package:jaded/jaded.dart";
-import "package:express/express.dart";
 import "dart:io";
+import "package:jaded/jaded.dart";
+import "../lib/express.dart";
+import "views/jade.views.dart";
 
 main(){
   int counter = 0;
   var app = new Express()
-    ..use(new JadeViewEngine())
+    ..use(new JadeViewEngine(viewTemplates:JADE_TEMPLATES))
     ..use(new StaticFileHandler("public"))
     
     ..get('/', (HttpContext ctx){

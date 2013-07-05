@@ -4,3 +4,11 @@
 *.jar
 *.war
 *.ear
+
+build.dart
+
+.buildlog
+
+test/.DS_Store
+
+.DS_Store

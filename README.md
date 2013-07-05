@@ -1,5 +1,5 @@
 Dart Express
-===========
+============
 
 A simple, thin [expressjs](http://expressjs.com/) inspired layer around Dart's primitive HttpServer APIs. 
 Also included is a single static file server module.
@@ -11,7 +11,7 @@ This library will eventually expand to help with other common usage patterns and
 Add this to your package's pubspec.yaml file:
 
 	dependencies:
-	  express: 0.1.0
+	  express: 0.1.1
 
 
 ## Example Usages
@@ -19,14 +19,15 @@ Add this to your package's pubspec.yaml file:
 ### [Basic Jade and Express app](https://github.com/dartist/express/blob/master/test/JadeExpress.dart)
 
 ```dart
+import "dart:io";
 import "package:jaded/jaded.dart";
 import "package:express/express.dart";
-import "dart:io";
+import "views/jade.views.dart";
 
 main(){
   int counter = 0;
   var app = new Express()
-    ..use(new JadeViewEngine())
+    ..use(new JadeViewEngine(viewTemplates:JADE_TEMPLATES))
     ..use(new StaticFileHandler("public"))
     
     ..get('/', (HttpContext ctx){
@@ -48,6 +49,21 @@ Static files used by this app
   - [/views](https://github.com/dartist/express/tree/master/test/views)
 	- index.jade
 	- layout.jade
+	
+### Pre-compile .jade views on save 
+
+This example uses the [Dart Editor build.dart](http://www.dartlang.org/tools/editor/build.html) 
+Build System to compile all .jade views in any directory that contains an empty `jade.yaml` file.
+
+To trigger this in your project add this to your projects `/build.dart` file:
+
+```dart 
+import "package:express/express_build.dart";
+
+main(){
+  build();
+}
+```
 
 ### [Backbone Todo's JSON Server](https://github.com/dartist/express/blob/master/test/ExpressTests.dart#L42) 
 

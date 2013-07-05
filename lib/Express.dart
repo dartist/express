@@ -8,7 +8,7 @@ import "dart:async";
 
 import "package:dartmixins/mixin.dart";
 import "package:jaded/jaded.dart" as jaded;
-import "path.dart";
+import "../../node_shims/lib/path.dart";
 
 part "content_types.dart";
 part "_express.dart";
@@ -80,6 +80,7 @@ abstract class Express {
   // When all routes and modules are registered - Start the HttpServer on host:port
   Future<HttpServer> listen([String host, int port]);
   
+  //render a view
   Future<bool> render(HttpContext ctx, String, [dynamic viewModel]);
   
   /// Permanently stops this [HttpServer] from listening for new connections.

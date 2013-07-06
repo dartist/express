@@ -8,7 +8,9 @@ import "dart:async";
 
 import "package:dartmixins/mixin.dart";
 import "package:jaded/jaded.dart" as jaded;
-import "../../node_shims/lib/path.dart";
+import "package:node_shims/path.dart";
+import "package:node_shims/js.dart";
+import "package:node_shims/utils.dart";
 
 part "content_types.dart";
 part "_express.dart";
@@ -81,7 +83,7 @@ abstract class Express {
   Future<HttpServer> listen([String host, int port]);
   
   //render a view
-  Future<bool> render(HttpContext ctx, String, [dynamic viewModel]);
+  bool render(HttpContext ctx, String, [dynamic viewModel]);
   
   /// Permanently stops this [HttpServer] from listening for new connections.
   /// This closes this [Stream] of [HttpRequest]s with a done event.
@@ -91,9 +93,11 @@ abstract class Express {
 /* A high-level object encapsulating both HttpRequest and HttpResponse objects
  * with useful overloads for each for common operations and usage patterns.
  */
-abstract class HttpContext {
+abstract class HttpContext implements HttpRequest {
   factory HttpContext(Express express, HttpRequest req, [String routePath]) =>
     new _HttpContext(express, req, req.response, routePath);
+  
+  //HttpRequest
 
   //Context
   String routePath;
@@ -137,5 +141,5 @@ typedef void RequestHandler (HttpContext ctx);
 abstract class Formatter implements Module {
   String get contentType;
   String get format => contentType.split("/").last;
-  Future<bool> render(HttpContext ctx, dynamic viewModel, [String viewName]);
+  String render(HttpContext ctx, dynamic viewModel, [String viewName]);
 }

@@ -1,6 +1,6 @@
 part of express;
 
-class _HttpContext implements HttpContext {
+class _HttpContext extends Stream<List<int>> implements HttpContext, HttpRequest {
   String routePath;
   String reqPath;
   RequestHandler handler;
@@ -11,6 +11,40 @@ class _HttpContext implements HttpContext {
   Express express;
 
   _HttpContext(this.express, this.req, this.res, [this.routePath]);
+  
+  //HttpRequest - allow HttpContext to be castable to HttpRequest if needed.
+  StreamSubscription<List<int>> listen(void onData(List<int> event),
+                                       {void onError(error),
+                                        void onDone(),
+                                        bool cancelOnError}) {
+    return req.listen(onData,
+                      onError: onError,
+                      onDone: onDone,
+                      cancelOnError: cancelOnError);
+  }  
+  
+  Uri get uri => req.uri;
+
+  String get method => req.method;
+
+  HttpSession get session => req.session;
+
+  HttpConnectionInfo get connectionInfo => req.connectionInfo;
+
+  X509Certificate get certificate => req.certificate;
+  
+  List<Cookie> get cookies => req.cookies;
+  
+  HttpHeaders get headers => req.headers;
+  
+  bool get persistentConnection => req.persistentConnection;
+  
+  int get contentLength => req.contentLength;
+  
+  String get protocolVersion => req.protocolVersion;
+  
+  HttpResponse get response => req.response;
+  //END HttpRequest  
 
   Map<String,String> get params{
     if (_params == null){

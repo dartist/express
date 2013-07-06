@@ -16,7 +16,7 @@ packages:
   jaded:
     description: jaded
     source: hosted
-    version: "0.1.4"
+    version: "0.1.5"
   json_client:
     description: json_client
     source: hosted

@@ -4,10 +4,9 @@ class JadeViewEngine extends Formatter {
   Express express;
   
   Map<String,Function> viewTemplates;
+  Map<String,Function> publicTemplates;
   
-  JadeViewEngine({this.viewTemplates}){
-    
-  }
+  JadeViewEngine(this.viewTemplates, {this.publicTemplates}){}
   
   void register(Express server) {
     express = server;
@@ -17,7 +16,36 @@ class JadeViewEngine extends Formatter {
   String get contentType => "text/html";
   String get viewsDir => express.getConfig('views');
   
-  Future<bool> render(HttpContext ctx, dynamic viewModel, [String viewName]){   
+  String render(HttpContext ctx, dynamic viewModel, [String viewName]){
+    var relativePath = viewName != null
+        ? "${viewName}.$ext"
+        : "${trimStart(ctx.uri.path,'/')}.$ext";
+    
+    if (publicTemplates != null && viewModel == null && viewName == null){
+      var render = publicTemplates["./$relativePath"];
+      if (render != null){
+        var req = ctx.req;
+        viewModel = {
+          'method': req.method,
+          'uri': req.uri,
+          'headers': req.headers,
+          'request': req,
+          'response': req.response,
+        };
+        var html = render(viewModel);
+        return html;
+      }
+    }
+    
+    var render = viewTemplates["./$relativePath"];
+    if (render != null){
+      var html = render(viewModel);
+      return html;
+    }
+    return null;
+  }
+  
+  Future<String> renderAsync(HttpContext ctx, dynamic viewModel, [String viewName]){   
     var completer = new Completer();
     var req = ctx.req;
     var relativePath = viewName != null
@@ -25,31 +53,17 @@ class JadeViewEngine extends Formatter {
       : "${req.uri.path}.$ext";
     var viewPath = join([viewsDir,relativePath]); 
       
-    if (viewTemplates != null){
-      var render = viewTemplates["./$relativePath"];
-      if (render != null){
-        try{
-          var html = render(viewModel);
-          ctx.sendHtml(html);
-          completer.complete(true);
-        }catch(e){
-          completer.completeError(e);
-        }
-        return completer.future;
-      }
-    }
-
     var viewFile = new File(viewPath);
     viewFile.exists().then((isFile){
       if (isFile){
         jaded.renderFile(viewFile.path)
-        .then((html) {
-          ctx.sendHtml(html);
+        .then((html){
+          completer.complete(html);
         })
         .catchError(completer.completeError);
       }
       else {
-        completer.complete(false);
+        completer.complete(null);
       }
     });
 

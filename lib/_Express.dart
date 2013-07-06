@@ -91,22 +91,18 @@ class _Express implements Express {
     _customHandlers.add(new RequestHandlerEntry(matcher, requestHandler, priority));
     _customHandlers.sort((x,y) => x.priority - y.priority);
   }
+  
+  Iterable<Formatter> get formatters => _modules.where((x) => x is Formatter); 
 
-  Future<bool> render(HttpContext ctx, String viewName, [dynamic viewModel]){
-    var completer = new Completer();
-    List<Formatter> formatters = _modules.where((x) => x is Formatter).toList();
-    
-    doNext(){
-      if (formatters.length > 0){
-        var formatter = formatters.removeAt(0);
-        formatter.render(ctx, viewModel, viewName)
-          .then((handled) => handled ? completer.complete(true) : doNext())
-          .catchError(completer.completeError);        
-      } else {
-        completer.complete(false);
+  bool render(HttpContext ctx, String viewName, [dynamic viewModel]){
+    for (var formatter in formatters){
+      var result = formatter.render(ctx, viewModel, viewName);
+      if (result != null){
+        ctx.sendHtml(result);
+        return true;
       }
-    };
-    doNext();
+    }
+    return false;
   }
   
   Future<HttpServer> listen([String host="127.0.0.1", int port=80]){
@@ -115,10 +111,12 @@ class _Express implements Express {
       _modules.forEach((module) => module.register(this));
       
       server.listen((HttpRequest req){
+        var ctx = new HttpContext(this, req);
+
         for (RequestHandlerEntry customHandler in 
             _customHandlers.where((x) => x.priority < 0)){
           if (customHandler.matcher(req)){
-            customHandler.handler(new HttpContext(this, req));
+            customHandler.handler(ctx);
             return;
           }            
         }
@@ -132,6 +130,14 @@ class _Express implements Express {
               return;
             }
           }            
+        }
+
+        for (var formatter in formatters){
+          var result = formatter.render(ctx, null);
+          if (result != null){
+            ctx.sendHtml(result);
+            return;
+          }
         }
         
         for (RequestHandlerEntry customHandler in _customHandlers

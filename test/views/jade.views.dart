@@ -1,3 +1,4 @@
+library jade_views;
 import 'package:jaded/runtime.dart';
 import 'package:jaded/runtime.dart' as jade;
 Map<String,Function> JADE_TEMPLATES = {

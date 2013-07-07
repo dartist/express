@@ -3,28 +3,33 @@ part of express;
 class JadeViewEngine extends Formatter {
   Express express;
   
-  Map<String,Function> viewTemplates;
-  Map<String,Function> publicTemplates;
+  /// Render a .jade view from a route with ctx.render()
+  Map<String,Function> views;  
   
-  JadeViewEngine(this.viewTemplates, {this.publicTemplates}){}
+  /// Execute a .jade view directly (i.e. without a route)
+  Map<String,Function> pages;
+  
+  JadeViewEngine(this.views, {this.pages}){
+    ext = "jade";
+  }
   
   void register(Express server) {
     express = server;
   }
   
-  String get ext => "jade";
+  String ext;
   String get contentType => "text/html";
-  String get viewsDir => express.getConfig('views');
   
   String render(HttpContext ctx, dynamic viewModel, [String viewName]){
     var relativePath = viewName != null
         ? "${viewName}.$ext"
         : "${trimStart(ctx.uri.path,'/')}.$ext";
     
-    if (publicTemplates != null && viewModel == null && viewName == null){
-      var render = publicTemplates["./$relativePath"];
+    if (pages != null && viewModel == null && viewName == null){
+      var render = pages["./$relativePath"];
       if (render != null){
         var req = ctx.req;
+        //the 
         viewModel = {
           'method': req.method,
           'uri': req.uri,
@@ -37,14 +42,17 @@ class JadeViewEngine extends Formatter {
       }
     }
     
-    var render = viewTemplates["./$relativePath"];
+    var render = views["./$relativePath"];
     if (render != null){
       var html = render(viewModel);
       return html;
     }
     return null;
   }
+
+  String get viewsDir => express.getConfig('views');
   
+  //Alternative way to compile and execute a .jade view at runtime via an isolate 
   Future<String> renderAsync(HttpContext ctx, dynamic viewModel, [String viewName]){   
     var completer = new Completer();
     var req = ctx.req;

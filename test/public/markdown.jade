@@ -1,0 +1,22 @@
+extend layout-plain
+
+block content
+  .content
+    :markdown
+      ## heading 2
+      this is [a link](http://google.com)
+      > Quote
+  
+block sidebar
+  .widget
+    h1 Widget
+    :markdown
+      ## sidebar heading 2
+      this is [another link](http://google.com)
+    
+    p
+      | Vivamus hendrerit arcu sed erat molestie
+      | vehicula.
+
+block end    
+  include content.md

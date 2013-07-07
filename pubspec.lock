@@ -16,11 +16,15 @@ packages:
   jaded:
     description: jaded
     source: hosted
-    version: "0.1.5"
+    version: "0.1.7"
   json_client:
     description: json_client
     source: hosted
     version: "0.1.2"
+  markdown:
+    description: markdown
+    source: hosted
+    version: "0.5.0"
   meta:
     description: meta
     source: hosted

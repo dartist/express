@@ -1,6 +1,7 @@
 part of express;
 
 typedef bool RequestHandlerMatcher (HttpRequest req);
+typedef void ErrorHandler(e, stacktace, HttpContext req);
 
 class RequestHandlerEntry {
   RequestHandlerMatcher matcher;
@@ -18,19 +19,31 @@ class _Express implements Express {
   HttpServer server;
   List<RequestHandlerEntry> _customHandlers; 
   Map<String,String> configs = {};
+  ErrorHandler errorHandler;
 
   _Express() {
     _verbPaths = new Map<String, LinkedHashMap<String,RequestHandler>>();
     _verbs.forEach((x) => _verbPaths[x] = {});
     _modules = new List<Module>();
     _customHandlers = new List<RequestHandlerEntry>();
+    errorHandler = _errorHandler;
     config('basedir', __dirname);
     config('views', 'views');
   }
 
   Express _addHandler(String verb, String atRoute, RequestHandler handler){
-    _verbPaths[verb][atRoute] = handler;
+    _verbPaths[verb][atRoute] = managedRequestHandler(handler);
     return this;
+  }
+  
+  managedRequestHandler(RequestHandler handler){
+    return (HttpContext ctx){
+      try {
+        handler(ctx);
+      } catch (e, stacktrace){
+        errorHandler(e, stacktrace, ctx);
+      }
+    };
   }
 
   void config(String name, String value){
@@ -94,15 +107,32 @@ class _Express implements Express {
   
   Iterable<Formatter> get formatters => _modules.where((x) => x is Formatter); 
 
-  bool render(HttpContext ctx, String viewName, [dynamic viewModel]){
+  void render(HttpContext ctx, String viewName, [dynamic viewModel]){
     for (var formatter in formatters){
       var result = formatter.render(ctx, viewModel, viewName);
       if (result != null){
         ctx.sendHtml(result);
-        return true;
       }
+      if (ctx.closed) return;
     }
-    return false;
+  }
+  
+  _errorHandler(e, stacktrace, HttpContext ctx){
+    var error = stacktrace != null
+      ? "$e\n\nStackTrace:\n$stacktrace"
+      : e;
+            
+    try{
+      if (!ctx.closed){
+        ctx.sendText(error, contentType: ContentTypes.TEXT, 
+            httpStatus: 500, statusReason: "Internal ServerError");
+      }
+    } catch(e){/*ignore*/}
+    finally{
+      ctx.end();
+    }
+    
+    logError(error);
   }
   
   Future<HttpServer> listen([String host="127.0.0.1", int port=80]){
@@ -113,39 +143,45 @@ class _Express implements Express {
       server.listen((HttpRequest req){
         var ctx = new HttpContext(this, req);
 
-        for (RequestHandlerEntry customHandler in 
-            _customHandlers.where((x) => x.priority < 0)){
-          if (customHandler.matcher(req)){
-            customHandler.handler(ctx);
-            return;
-          }            
-        }
-        
-        for (var verb in _verbPaths.keys){
-          var handlers = _verbPaths[verb];
-          for (var route in handlers.keys){
-            if (isMatch(verb, route, req)){
-              var handler = handlers[route];              
-              handler(new HttpContext(this, req, route));
+        try
+        {
+          for (RequestHandlerEntry customHandler in 
+              _customHandlers.where((x) => x.priority < 0)){
+            if (customHandler.matcher(req)){
+              customHandler.handler(ctx);
+              return;
+            }            
+          }
+          
+          for (var verb in _verbPaths.keys){
+            var handlers = _verbPaths[verb];
+            for (var route in handlers.keys){
+              if (isMatch(verb, route, req)){
+                var handler = handlers[route];
+                ctx = new HttpContext(this, req, route);
+                handler(ctx);
+                return;
+              }
+            }            
+          }
+  
+          for (var formatter in formatters){
+            var result = formatter.render(ctx, null);
+            if (result != null){
+              ctx.sendHtml(result);
               return;
             }
-          }            
-        }
-
-        for (var formatter in formatters){
-          var result = formatter.render(ctx, null);
-          if (result != null){
-            ctx.sendHtml(result);
-            return;
           }
-        }
-        
-        for (RequestHandlerEntry customHandler in _customHandlers
-            .where((x) => x.priority >= 0)){
-          if (customHandler.matcher(req)){
-            customHandler.handler(new HttpContext(this, req));
-            return;
-          }            
+          
+          for (RequestHandlerEntry customHandler in _customHandlers
+              .where((x) => x.priority >= 0)){
+            if (customHandler.matcher(req)){
+              customHandler.handler(ctx);
+              return;
+            }            
+          }
+        } catch(e, stacktrace){
+          errorHandler(e, stacktrace, ctx);
         }
         
         new HttpContext(this, req).notFound("not found","'${req.uri.path}' was not found.");

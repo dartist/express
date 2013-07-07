@@ -7,11 +7,15 @@ import "public/jade.views.dart" as public;
 main(){
   int counter = 0;
   var app = new Express()
-    ..use(new JadeViewEngine(views.JADE_TEMPLATES, publicTemplates:public.JADE_TEMPLATES))
+    ..use(new JadeViewEngine(views.JADE_TEMPLATES, pages:public.JADE_TEMPLATES))
     ..use(new StaticFileHandler("public"))
     
     ..get('/', (HttpContext ctx){
       ctx.render('index', {'title': 'Home'});
+    })
+  
+    ..get('/error', (HttpContext ctx){
+      throw new ArgumentError("Custom User Error");
     })
   
     ..get('/counter', (HttpContext ctx){

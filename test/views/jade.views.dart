@@ -57,6 +57,7 @@ return buf.join("");
 './sub/sub2/perf.jade': ([Map locals]){///jade-begin
   if (locals == null) locals = {};
   var report = locals['report'];
+var item = locals['item'];
 var chp, sec, page;
 
 var buf = [];

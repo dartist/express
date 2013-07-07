@@ -11,7 +11,7 @@ This library will eventually expand to help with other common usage patterns and
 Add this to your package's pubspec.yaml file:
 
 	dependencies:
-	  express: 0.1.1
+	  express: 0.1.2
 
 
 ## Example Usages
@@ -31,7 +31,6 @@ import "public/jade.views.dart" as pages;
 basicApp(){
   int counter = 0;
   var app = new Express()
-    ..config('views','views')
     ..use(new JadeViewEngine(views.JADE_TEMPLATES, pages:pages.JADE_TEMPLATES))
     ..use(new StaticFileHandler("public"))
     
@@ -47,7 +46,7 @@ basicApp(){
       ctx.sendJson({'counter': counter++});
     });
 
- app.listen("127.0.0.1", 8000);
+  app.listen("127.0.0.1", 8000);
 }
 ```
 
@@ -159,12 +158,13 @@ Then when the server has started, the request handler of the first matching rout
 
 ```dart
 abstract class Express {
+  factory Express() = _Express;
+  
+  //Sets a config setting
+  void config(String name, String value);
 
   //Gets a config setting
   String getConfig(String name);
-  
-  //Sets a config setting
-  void setConfig(String name, String value);
 
   //Register a module to be used with this app
   Express use(Module module);
@@ -209,6 +209,9 @@ abstract class Express {
   // When all routes and modules are registered - Start the HttpServer on host:port
   Future<HttpServer> listen([String host, int port]);
   
+  //render a view
+  void render(HttpContext ctx, String viewName, [dynamic viewModel]);
+  
   /// Permanently stops this [HttpServer] from listening for new connections.
   /// This closes this [Stream] of [HttpRequest]s with a done event.
   void close();
@@ -218,22 +221,21 @@ abstract class Express {
 A high-level object encapsulating both HttpRequest and HttpResponse objects providing useful overloads for common operations and usage patterns.
 
 ```dart
-abstract class HttpContext {
-
+abstract class HttpContext implements HttpRequest {
   //Context
   String routePath;
   HttpRequest  req;
   HttpResponse res;
   Map<String,String> get params;
 
-  //Read
+  //Read APIs
   String get contentType;
   Future<List<int>> readAsBytes();
   Future<String> readAsText([Encoding encoding]);
   Future<Object> readAsJson({Encoding encoding});
   Future<Object> readAsObject([Encoding encoding]);
 
-  //Write
+  //Write APIs
   String get responseContentType;
   void set responseContentType(String value);
   HttpContext head([int httpStatus, String statusReason, String contentType, Map<String,String> headers]);
@@ -242,6 +244,7 @@ abstract class HttpContext {
   HttpContext writeText(String text);
   HttpContext writeBytes(List<int> bytes);
 
+  //Overloads for sending different content responses 
   void send({Object value, String contentType, int httpStatus, String statusReason});
   void sendJson(Object value, {int httpStatus, String statusReason});
   void sendHtml(Object value, [int httpStatus, String statusReason]);
@@ -250,6 +253,15 @@ abstract class HttpContext {
 
   //Custom Status responses
   void notFound([String statusReason, Object value, String contentType]);
+
+  //Format response with the default renderer
+  void render(String, [dynamic viewModel]);
+
+  //Close and mark this request as handled 
+  void end();
+  
+  //If the request has been handled
+  bool get closed;
 }
 ```
 
@@ -257,10 +269,11 @@ abstract class HttpContext {
 
 ### JadeViewEngine
 
-Register the jaded view engine to render HTML views
+Register the jaded view engine to render HTML .jade views.
+Supports both controller view pages and static page .jade templates.
 
 ```dart
-app.use(new JadeViewEngine());
+app.use(new JadeViewEngine(views.JADE_TEMPLATES, pages:pages.JADE_TEMPLATES))
 ```
 
 #### Usage
@@ -273,6 +286,22 @@ app.get('/', (HttpContext ctx){
 
 Renders the `/views/index.jade` view with the `{'title': 'Home'}` view model. 
 
+A request without a matching route, e.g:
+
+    GET /page
+
+Will execute the `/public/page.jade` template, passing these HTTP request vars as the viewModel:
+
+```dart
+Map viewModel = {
+  'method': req.method,
+  'uri': req.uri,
+  'headers': req.headers,
+  'request': req,
+  'response': req.response,
+}
+```
+
 ### StaticFileHandler
 
 Serve static files for requests that don't match any defined routes:
@@ -282,6 +311,25 @@ app.use(new StaticFileHandler('public'));
 ```
 
 Serves static files from the `/public` folder.
+
+### Other APIs
+
+```dart
+// Register different Formatters
+abstract class Formatter implements Module {
+  String get contentType;
+  String get format => contentType.split("/").last;
+  String render(HttpContext ctx, dynamic viewModel, [String viewName]);
+}
+
+// The loglevel for express
+int logLevel = LogLevel.Info;
+
+// Inject your own logger
+typedef Logger(Object obj);
+Logger logger = (Object obj) => print(obj);
+```
+
 
 -----
 

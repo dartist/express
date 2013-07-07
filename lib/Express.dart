@@ -83,7 +83,7 @@ abstract class Express {
   Future<HttpServer> listen([String host, int port]);
   
   //render a view
-  void render(HttpContext ctx, String, [dynamic viewModel]);
+  void render(HttpContext ctx, String viewName, [dynamic viewModel]);
   
   /// Permanently stops this [HttpServer] from listening for new connections.
   /// This closes this [Stream] of [HttpRequest]s with a done event.
@@ -105,14 +105,14 @@ abstract class HttpContext implements HttpRequest {
   HttpResponse res;
   Map<String,String> get params;
 
-  //Read
+  //Read APIs
   String get contentType;
   Future<List<int>> readAsBytes();
   Future<String> readAsText([Encoding encoding]);
   Future<Object> readAsJson({Encoding encoding});
   Future<Object> readAsObject([Encoding encoding]);
 
-  //Write
+  //Write APIs
   String get responseContentType;
   void set responseContentType(String value);
   HttpContext head([int httpStatus, String statusReason, String contentType, Map<String,String> headers]);
@@ -121,6 +121,7 @@ abstract class HttpContext implements HttpRequest {
   HttpContext writeText(String text);
   HttpContext writeBytes(List<int> bytes);
 
+  //Overloads for sending different content responses 
   void send({Object value, String contentType, int httpStatus, String statusReason});
   void sendJson(Object value, {int httpStatus, String statusReason});
   void sendHtml(Object value, [int httpStatus, String statusReason]);
@@ -150,7 +151,9 @@ abstract class Formatter implements Module {
   String render(HttpContext ctx, dynamic viewModel, [String viewName]);
 }
 
+// The loglevel for express
 int logLevel = LogLevel.Info;
 
+// Inject your own logger
 typedef Logger(Object obj);
 Logger logger = (Object obj) => print(obj);

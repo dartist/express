@@ -18,23 +18,32 @@ Add this to your package's pubspec.yaml file:
 
 ### [Basic Jade and Express app](https://github.com/dartist/express/blob/master/test/JadeExpress.dart)
 
+[Basic Jade and Express app screenshot](http://i.imgur.com/RXhxJcd.png)
+
 ```dart
-import "dart:io";
 import "package:jaded/jaded.dart";
 import "package:express/express.dart";
-import "views/jade.views.dart";
+import "dart:io";
 
-main(){
+import "views/jade.views.dart" as views;
+import "public/jade.views.dart" as pages;
+
+basicApp(){
   int counter = 0;
   var app = new Express()
-    ..use(new JadeViewEngine(viewTemplates:JADE_TEMPLATES))
+    ..config('views','views')
+    ..use(new JadeViewEngine(views.JADE_TEMPLATES, pages:pages.JADE_TEMPLATES))
     ..use(new StaticFileHandler("public"))
     
-    ..get('/', (HttpContext ctx){
+    ..get('/', (ctx){
       ctx.render('index', {'title': 'Home'});
     })
+    
+    ..get('/error', (ctx){
+      throw new ArgumentError("custom error in handler");
+    })
   
-    ..get('/counter', (HttpContext ctx){
+    ..get('/counter', (ctx){
       ctx.sendJson({'counter': counter++});
     });
 
@@ -44,11 +53,22 @@ main(){
 
 Static files used by this app 
 
-  - [/public/stylesheets](https://github.com/dartist/express/tree/master/test/public/stylesheets)
-    - style.css
+  - [/public](https://github.com/dartist/express/tree/master/test/public)
+    - [/stylesheets](https://github.com/dartist/express/tree/master/test/public/stylesheets)
+      - style.css
+	- layout.jade - layout for .jade pages called directly (i.e. no explicit route required)
+	- layout-plain.jade - an alternative layout used by page.jade
+	- static.jade - a static home page
+	- page.jade - another page with layout-plain and inline :markdown content
+	- links.md - a markdown partial
+	- jade.yaml - tell express to watch and pre-compile .jade views in this directory
+	- jade.views.dart - the pre-compiled .jade views for this directory
   - [/views](https://github.com/dartist/express/tree/master/test/views)
-	- index.jade
 	- layout.jade
+	- index.jade
+	- links.md - a markdown partial
+	- jade.yaml - tell express to watch and pre-compile .jade views in this directory
+	- jade.views.dart - the pre-compiled .jade views for this directory
 	
 ### Pre-compile .jade views on save 
 
@@ -58,10 +78,10 @@ Build System to compile all .jade views in any directory that contains an empty 
 To trigger this in your project add this to your projects `/build.dart` file:
 
 ```dart 
-import "package:express/express_build.dart";
+import "package:express/express_build.dart" as express;
 
 main(){
-  build();
+  express.build();
 }
 ```
 

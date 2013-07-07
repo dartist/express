@@ -33,7 +33,8 @@ void build([List<String> args]){
   var touchedFiles = changedFiles.toList()..addAll(removedFiles);
   if (cleanBuild 
       || fullBuild 
-      || touchedFiles.any((x) => x.endsWith(".jade") || x.endsWith("jade.yaml")))
+      || touchedFiles.any((x) => 
+          x.endsWith("jade.yaml") || x.endsWith(".jade") || x.endsWith(".md")))
   {
     var yamlMarkers = [];
 

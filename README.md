@@ -18,7 +18,7 @@ Add this to your package's pubspec.yaml file:
 
 ### [Basic Jade and Express app](https://github.com/dartist/express/blob/master/test/JadeExpress.dart)
 
-![Basic Jade and Express app screenshot](http://i.imgur.com/RXhxJcd.png)
+![basic jade and express app screenshot](http://i.imgur.com/RXhxJcd.png)
 
 ```dart
 import "package:jaded/jaded.dart";
@@ -54,21 +54,21 @@ basicApp(){
 Static files used by this app 
 
   - [/public](https://github.com/dartist/express/tree/master/test/public)
-    - [/stylesheets](https://github.com/dartist/express/tree/master/test/public/stylesheets)
-      - style.css
-	- layout.jade - layout for .jade pages called directly (i.e. no explicit route required)
-	- layout-plain.jade - an alternative layout used by page.jade
-	- static.jade - a static home page
-	- page.jade - another page with layout-plain and inline :markdown content
-	- links.md - a markdown partial
-	- jade.yaml - tell express to watch and pre-compile .jade views in this directory
-	- jade.views.dart - the pre-compiled .jade views for this directory
+    - `/stylesheets`
+      - **style.css**
+	- **layout.jade** - layout for .jade pages called directly (i.e. no explicit route required)
+	- **layout-plain.jade** - an alternative layout used by page.jade
+	- **static.jade** - a static home page
+	- **page.jade** - another page with layout-plain and inline :markdown content
+	- **links.md** - a markdown partial
+	- **jade.yaml** - tell express to watch and pre-compile .jade views in this directory
+	- **jade.views.dart** - the auto-generated pre-compiled .jade views for this directory
   - [/views](https://github.com/dartist/express/tree/master/test/views)
-	- layout.jade
-	- index.jade
-	- links.md - a markdown partial
-	- jade.yaml - tell express to watch and pre-compile .jade views in this directory
-	- jade.views.dart - the pre-compiled .jade views for this directory
+	- **layout.jade**
+	- **index.jade**
+	- **links.md** - a markdown partial
+	- **jade.yaml** - tell express to watch and pre-compile .jade views in this directory
+	- **jade.views.dart** - the auto-generated pre-compiled .jade views for this directory
 	
 ### Pre-compile .jade views on save 
 

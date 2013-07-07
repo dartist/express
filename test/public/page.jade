@@ -13,12 +13,42 @@ block content
     | lectus vestibulum faucibus eget in metus.
     | In pellentesque faucibus vestibulum. Nulla
     | at nulla justo, eget luctus tortor.
-    
-  h3 Request Info 
-  p
-    ol
-      li method: #{method} 
-      li uri: #{uri}
+     
+  h2 Request Info
+  hr 
+  table
+    tr
+      th method 
+      td= method
+    tr 
+      th uri 
+      td (#{uri})
+    tr 
+      th request.protocolVersion
+      td= request.protocolVersion
+    tr 
+      th request.cookies
+      td (#{request.cookies})
+    tr 
+      th request.connectionInfo.remoteHost 
+      td= request.connectionInfo.remoteHost
+
+  br
+  h2 Response Info
+  hr 
+  table
+    tr
+      th response.statusCode
+      td= response.statusCode
+    tr
+      th response.reasonPhrase
+      td= response.reasonPhrase
+    tr
+      th response.contentLength
+      td= response.contentLength
+    tr
+      th response.headers.contentType
+      td= response.headers.contentType
 
 block sidebar
   .widget
@@ -30,3 +60,6 @@ block sidebar
     p
       | Vivamus hendrerit arcu sed erat molestie
       | vehicula.
+
+block end
+  p at the end

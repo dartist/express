@@ -83,7 +83,7 @@ abstract class Express {
   Future<HttpServer> listen([String host, int port]);
   
   //render a view
-  bool render(HttpContext ctx, String, [dynamic viewModel]);
+  void render(HttpContext ctx, String, [dynamic viewModel]);
   
   /// Permanently stops this [HttpServer] from listening for new connections.
   /// This closes this [Stream] of [HttpRequest]s with a done event.
@@ -132,6 +132,12 @@ abstract class HttpContext implements HttpRequest {
 
   //Format response with the default renderer
   void render(String, [dynamic viewModel]);
+
+  //Close and mark this request as handled 
+  void end();
+  
+  //If the request has been handled
+  bool get closed;
 }
 
 // The signature your Request Handlers should implement
@@ -143,3 +149,8 @@ abstract class Formatter implements Module {
   String get format => contentType.split("/").last;
   String render(HttpContext ctx, dynamic viewModel, [String viewName]);
 }
+
+int logLevel = LogLevel.Info;
+
+typedef Logger(Object obj);
+Logger logger = (Object obj) => print(obj);

@@ -9,8 +9,12 @@ class _HttpContext extends Stream<List<int>> implements HttpContext, HttpRequest
   Map<String,String> _params;
   String _format;
   Express express;
+  bool _closed = false;
 
-  _HttpContext(this.express, this.req, this.res, [this.routePath]);
+  _HttpContext(this.express, this.req, this.res, [this.routePath]){
+    res.done.then(
+      (_) => _closed = true, onError: (_) => _closed = true);
+  }
   
   //HttpRequest - allow HttpContext to be castable to HttpRequest if needed.
   StreamSubscription<List<int>> listen(void onData(List<int> event),
@@ -152,7 +156,7 @@ class _HttpContext extends Stream<List<int>> implements HttpContext, HttpRequest
   void send({Object value, String contentType, int httpStatus, String statusReason}){
     head(httpStatus, statusReason, contentType);
     if (value != null) write(value);
-    res.close();
+    end();
   }
 
   void sendJson(Object value, {int httpStatus, String statusReason}) =>
@@ -164,20 +168,27 @@ class _HttpContext extends Stream<List<int>> implements HttpContext, HttpRequest
   void sendText(Object value, {String contentType, int httpStatus, String statusReason}){
     head(httpStatus, statusReason, contentType);
     if (value != null) res.write(value);
-    res.close();
+    end();
   }
 
   void sendBytes(List<int> bytes, {String contentType, int httpStatus, String statusReason}){
     head(httpStatus, statusReason, contentType);
     if (bytes != null) res.write(bytes);
-    res.close();
+    end();
   }
 
   void notFound([String statusReason, Object value, String contentType]) =>
       send(value: value, contentType: contentType, httpStatus: HttpStatus.NOT_FOUND, statusReason: statusReason);
 
   void render(String viewName, [dynamic viewModel]){
-    express.render(this, viewName, viewModel);
+    express.render(this, viewName, viewModel);    
   }
   
+  void end(){
+    if (_closed) return;
+    _closed = true;
+    res.close();
+  }
+  
+  bool get closed => _closed;
 }

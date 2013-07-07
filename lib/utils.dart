@@ -23,7 +23,6 @@ Map<String,String> pathMatcher(String routePath, String matchesPath){
   return null;
 }
 
-int logLevel = LogLevel.Info;
 
 class LogLevel {
   static final int None = 0;
@@ -35,11 +34,14 @@ class LogLevel {
 }
 
 void logDebug (arg) {
-  if (logLevel >= LogLevel.Debug) print(arg);
+  if (logLevel >= LogLevel.Debug) logger(arg);
 }
 void logInfo (arg) {
-  if (logLevel >= LogLevel.Info) print(arg);
+  if (logLevel >= LogLevel.Info) logger(arg);
 }
 void logError (arg) {
-  if (logLevel >= LogLevel.Error) print(arg);
+  if (logLevel >= LogLevel.Error) logger(arg);
 }
+
+
+

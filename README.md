@@ -18,7 +18,7 @@ Add this to your package's pubspec.yaml file:
 
 ### [Basic Jade and Express app](https://github.com/dartist/express/blob/master/test/JadeExpress.dart)
 
-[Basic Jade and Express app screenshot](http://i.imgur.com/RXhxJcd.png)
+![Basic Jade and Express app screenshot](http://i.imgur.com/RXhxJcd.png)
 
 ```dart
 import "package:jaded/jaded.dart";

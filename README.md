@@ -28,7 +28,7 @@ import "dart:io";
 import "views/jade.views.dart" as views;
 import "public/jade.views.dart" as pages;
 
-basicApp(){
+main(){
   int counter = 0;
   var app = new Express()
     ..use(new JadeViewEngine(views.JADE_TEMPLATES, pages:pages.JADE_TEMPLATES))

@@ -1,7 +1,7 @@
 library express;
 
 import "dart:io";
-import "dart:json" as JSON;
+import "dart:convert" as CONV;
 import "dart:collection";
 import "dart:typed_data";
 import "dart:async";
@@ -9,7 +9,6 @@ import "dart:async";
 import "package:dartmixins/mixin.dart";
 import "package:jaded/jaded.dart" as jaded;
 import "package:node_shims/path.dart";
-import "package:node_shims/js.dart";
 import "package:node_shims/utils.dart";
 
 part "content_types.dart";
@@ -108,9 +107,9 @@ abstract class HttpContext implements HttpRequest {
   //Read APIs
   String get contentType;
   Future<List<int>> readAsBytes();
-  Future<String> readAsText([Encoding encoding]);
-  Future<Object> readAsJson({Encoding encoding});
-  Future<Object> readAsObject([Encoding encoding]);
+  Future<String> readAsText([CONV.Encoding encoding]);
+  Future<Object> readAsJson({CONV.Encoding encoding});
+  Future<Object> readAsObject([CONV.Encoding encoding]);
 
   //Write APIs
   String get responseContentType;

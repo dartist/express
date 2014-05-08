@@ -1,7 +1,6 @@
 import "package:unittest/unittest.dart";
 import "../lib/express.dart";
 import "dart:io";
-import "dart:async";
 import "package:dartmixins/mixin.dart";
 import "InMemoryRedisClient.dart";
 import "package:json_client/json_client.dart";
@@ -92,6 +91,8 @@ main(){
     });
         
     test("Express: Todo App", (){
+      /*JSONClient does not include the @Proxy annotation, warnings will be
+      generated on Dart Editor */
       client.todos({"content":"new TODO","done":false,"order":0}).then(expectAsync1((_){
 
         client.todos()

@@ -14,3 +14,4 @@ test/.DS_Store
 .DS_Store
 
 jade.views.dart
+packages/

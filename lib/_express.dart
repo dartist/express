@@ -191,6 +191,7 @@ class _Express implements Express {
     });
   }
   
-  void close() =>
+  void close() {
     server.close();
+  }
 }

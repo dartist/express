@@ -28,6 +28,8 @@ class _HttpContext extends Stream<List<int>> implements HttpContext, HttpRequest
   }  
   
   Uri get uri => req.uri;
+  
+  Uri get requestedUri => req.requestedUri;
 
   String get method => req.method;
 
@@ -70,12 +72,12 @@ class _HttpContext extends Stream<List<int>> implements HttpContext, HttpRequest
     return completer.future;
   }
 
-  Future<String> readAsText([Encoding encoding = Encoding.UTF_8]) {
+  Future<String> readAsText([CONV.Encoding encoding = CONV.UTF8]) {
     var completer = new Completer<String>();
     
     var buf = new StringBuffer();
     req
-      .transform(new StringDecoder(encoding))
+      .transform(encoding.decoder)
       .listen(buf.write)
       ..onError(completer.completeError)
       ..onDone((){      
@@ -85,12 +87,12 @@ class _HttpContext extends Stream<List<int>> implements HttpContext, HttpRequest
     return completer.future;
   }
 
-  Future<Object> readAsJson({Encoding encoding: Encoding.UTF_8}) =>
-      readAsText(encoding).then((json) => JSON.parse(json));
+  Future<Object> readAsJson({CONV.Encoding encoding: CONV.UTF8}) =>
+      readAsText(encoding).then((json) => CONV.JSON.decode(json));
 
-  Future<Object> readAsObject([Encoding encoding = Encoding.UTF_8]) =>
+  Future<Object> readAsObject([CONV.Encoding encoding = CONV.UTF8]) =>
       readAsText(encoding).then((text) => ContentTypes.isJson(contentType)
-           ? $(JSON.parse(text)).defaults(req.uri.queryParameters)
+           ? $(CONV.JSON.decode(text)).defaults(req.uri.queryParameters)
            : text
       );
 
@@ -129,7 +131,7 @@ class _HttpContext extends Stream<List<int>> implements HttpContext, HttpRequest
     if (value != null){
       switch(_contentTypeOnly){
         case ContentTypes.JSON:
-          res.write(JSON.stringify(value));
+          res.write(CONV.JSON.encode(value));
         break;
         default:
           if (value is List<int> || ContentTypes.isBinary(_contentTypeOnly)) {

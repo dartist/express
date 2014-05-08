@@ -1,8 +1,5 @@
 library RedisClient;
-import "dart:io";
-import "dart:math" as Math;
 import "dart:async";
-import "package:dartmixins/mixin.dart";
 
 
 class InMemoryRedisClient {

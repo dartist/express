@@ -36,13 +36,11 @@ class StaticFileHandler implements Module {
     file.exists().then((bool exists) {
       if (exists) {
         ctx.responseContentType = ContentTypes.getContentType(file);        
-        file.fullPath().then((String fullPath) {
-          file.openRead()
-          .pipe(ctx.res)
-          .catchError((e) { 
-            ctx.sendText("error sending '$path': $e", 
-              contentType: "text/plain", httpStatus: 500, statusReason:"static file error"); 
-          });
+        file.openRead()
+        .pipe(ctx.res)
+        .catchError((e) { 
+          ctx.sendText("error sending '$path': $e", 
+            contentType: "text/plain", httpStatus: 500, statusReason:"static file error"); 
         });
       } else {
         ctx.notFound("static file not found", "'$path' was not found on this server.");

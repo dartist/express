@@ -17,7 +17,7 @@ import "package:jaded/jaded.dart" as jade;
  */
 
 void build([List<String> args]){
-  buildArgs = args != null ? args : new Options().arguments;
+  buildArgs = args != null ? args : [];
   
   processArgs();
   

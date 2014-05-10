@@ -1,6 +1,4 @@
 import "DUnit.dart";
-import "dart:io";
-import "dart:async";
 import "package:dartmixins/mixin.dart";
 import "../lib/express.dart";
 import "InMemoryRedisClient.dart";

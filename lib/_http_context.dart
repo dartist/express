@@ -54,7 +54,8 @@ class _HttpContext extends Stream<List<int>> implements HttpContext, HttpRequest
 
   Map<String,String> get params{
     if (_params == null){
-      _params = $(pathMatcher(routePath, req.uri.path)).addAll(req.uri.queryParameters);
+      _params = pathMatcher(routePath, req.uri.path);
+      _params.addAll(req.uri.queryParameters);
     }
     return _params;
   }
@@ -92,7 +93,7 @@ class _HttpContext extends Stream<List<int>> implements HttpContext, HttpRequest
 
   Future<Object> readAsObject([CONV.Encoding encoding = CONV.UTF8]) =>
       readAsText(encoding).then((text) => ContentTypes.isJson(contentType)
-           ? $(CONV.JSON.decode(text)).defaults(req.uri.queryParameters)
+           ? CONV.JSON.decode(text)
            : text
       );
 
@@ -109,7 +110,7 @@ class _HttpContext extends Stream<List<int>> implements HttpContext, HttpRequest
   void set responseContentType(String value) {
     if (value == null || value.isEmpty) return;
     res.headers.set(HttpHeaders.CONTENT_TYPE, value);
-    _contentTypeOnly = $(value).splitOnFirst(";")[0];
+    _contentTypeOnly = (value).split(";")[0];
   }
 
   HttpContext head([int httpStatus, String statusReason, String contentType, Map<String,String> headers]){

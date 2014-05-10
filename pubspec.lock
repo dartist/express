@@ -9,10 +9,6 @@ packages:
     description: character_parser
     source: hosted
     version: "0.1.2"
-  dartmixins:
-    description: dartmixins
-    source: hosted
-    version: "0.0.3"
   jaded:
     description: jaded
     source: hosted

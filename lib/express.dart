@@ -6,7 +6,6 @@ import "dart:collection";
 import "dart:typed_data";
 import "dart:async";
 
-import "package:dartmixins/mixin.dart";
 import "package:jaded/jaded.dart" as jaded;
 import "package:node_shims/path.dart";
 import "package:node_shims/utils.dart";

@@ -1,7 +1,6 @@
 import "package:unittest/unittest.dart";
 import "../lib/express.dart";
 import "dart:io";
-import "package:dartmixins/mixin.dart";
 import "InMemoryRedisClient.dart";
 import "package:json_client/json_client.dart";
 
@@ -64,7 +63,7 @@ main(){
       .post("/todos", (HttpContext ctx){
         ctx.readAsJson().then((x){
           redis.incr("ids:todo").then((newId){
-            var todo = $(x).defaults({"content":null,"done":false,"order":0});
+            var todo = x;
             todo["id"] = newId;
             redis.set("todo:$newId", todo);
             ctx.sendJson(todo);

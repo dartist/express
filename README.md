@@ -11,7 +11,7 @@ This library will eventually expand to help with other common usage patterns and
 Add this to your package's pubspec.yaml file:
 
 	dependencies:
-	  express: 0.1.2
+	  express: 0.1.6
 
 
 ## Example Usages
@@ -325,9 +325,9 @@ abstract class Formatter implements Module {
 // The loglevel for express
 int logLevel = LogLevel.Info;
 
-// Inject your own logger
-typedef Logger(Object obj);
-Logger logger = (Object obj) => print(obj);
+// Inject your own logger, sensitive on logtypes (error, warning...)
+typedef Logger(Object obj, {int logtype});
+Logger logger = (Object obj, {int logtype}) => print(obj);
 ```
 
 

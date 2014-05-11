@@ -25,22 +25,25 @@ Map<String,String> pathMatcher(String routePath, String matchesPath){
 
 
 class LogLevel {
-  static final int None = 0;
-  static final int Error = 1;
-  static final int Warn = 2;
-  static final int Info = 3;
-  static final int Debug = 4;
-  static final int All = 5;
+  static const int NONE = 0;
+  static const int ERROR = 1;
+  static const int WARN = 2;
+  static const int INFO = 3;
+  static const int DEBUG = 4;
+  static const int ALL = 5;
 }
 
 void logDebug (arg) {
-  if (logLevel >= LogLevel.Debug) logger(arg);
+  if (logLevel >= LogLevel.DEBUG) logger(arg, logtype: LogLevel.DEBUG);
 }
 void logInfo (arg) {
-  if (logLevel >= LogLevel.Info) logger(arg);
+  if (logLevel >= LogLevel.INFO) logger(arg, logtype: LogLevel.INFO);
 }
 void logError (arg) {
-  if (logLevel >= LogLevel.Error) logger(arg);
+  if (logLevel >= LogLevel.ERROR) logger(arg, logtype: LogLevel.ERROR);
+}
+void logWarn (arg) {
+  if (logLevel >= LogLevel.WARN) logger(arg, logtype: LogLevel.WARN);
 }
 
 

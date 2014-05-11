@@ -157,6 +157,7 @@ class _Express implements Express {
             var handlers = _verbPaths[verb];
             for (var route in handlers.keys){
               if (isMatch(verb, route, req)){
+                logDebug("Handling $verb request to $route");
                 var handler = handlers[route];
                 ctx = new HttpContext(this, req, route);
                 handler(ctx);

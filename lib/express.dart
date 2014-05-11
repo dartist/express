@@ -9,6 +9,7 @@ import "dart:async";
 import "package:jaded/jaded.dart" as jaded;
 import "package:node_shims/path.dart";
 import "package:node_shims/utils.dart";
+import "package:ansicolor/ansicolor.dart" as ansicolor;
 
 part "content_types.dart";
 part "_express.dart";
@@ -150,8 +151,32 @@ abstract class Formatter implements Module {
 }
 
 // The loglevel for express
-int logLevel = LogLevel.Info;
+int logLevel = LogLevel.INFO;
 
 // Inject your own logger
-typedef Logger(Object obj);
-Logger logger = (Object obj) => print(obj);
+typedef Logger(Object obj, {int logtype});
+Logger logger = (Object obj, {int logtype}) {
+  var red = new ansicolor.AnsiPen()..red();
+  var yellow = new ansicolor.AnsiPen()..yellow();
+  var green = new ansicolor.AnsiPen()..green();
+  var cyan = new ansicolor.AnsiPen()..cyan();
+  var now = new DateTime.now();
+  var msg = "[$now] $obj";
+  
+  if (logtype == null || logtype == LogLevel.ALL) {
+    print(msg);
+    return;
+  }
+  if (logtype == LogLevel.DEBUG) {
+    print(green(msg));
+    return;
+  }
+  if (logtype == LogLevel.WARN) {
+    print(yellow(msg));
+    return;
+  }
+  if (logtype == LogLevel.INFO) {
+    print(cyan(msg));
+    return;
+  }
+};

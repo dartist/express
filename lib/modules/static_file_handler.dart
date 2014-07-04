@@ -20,7 +20,7 @@ class StaticFileHandler implements Module {
       ? join([atPath, reqPath])
       : reqPath;
 
-    if (path.endsWith("/")){
+    if (path.endsWith(Platform.pathSeparator)){
       path += defaultDocuments.first;
     }
     

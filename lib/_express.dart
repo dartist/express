@@ -88,7 +88,7 @@ class _Express implements Express {
     any(atRoute, handler);
   }
 
-  bool handlesRequest(HttpRequest req) {
+  bool handlesRequest(HttpRequest req) {      
     bool foundMatch = _verbPaths[req.method] != null &&
     ( _verbPaths[req.method].keys.any((x) => routeMatches(x, req.uri.path))
       || _verbPaths["ANY"].keys.any((x) => routeMatches(x, req.uri.path)) );
@@ -142,50 +142,57 @@ class _Express implements Express {
       
       server.listen((HttpRequest req){
         var ctx = new HttpContext(this, req);
+        
+        List<int> dataBody = new List<int>();
+        req.listen(dataBody.addAll, onDone: () {
+          var body = Uri.splitQueryString(new String.fromCharCodes(dataBody));
 
-        try
-        {
-          for (RequestHandlerEntry customHandler in 
-              _customHandlers.where((x) => x.priority < 0)){
-            if (customHandler.matcher(req)){
-              customHandler.handler(ctx);
-              return;
-            }            
-          }
-          
-          for (var verb in _verbPaths.keys){
-            var handlers = _verbPaths[verb];
-            for (var route in handlers.keys){
-              if (isMatch(verb, route, req)){
-                logDebug("Handling $verb request to $route");
-                var handler = handlers[route];
-                ctx = new HttpContext(this, req, route);
-                handler(ctx);
+          try
+          {
+            for (RequestHandlerEntry customHandler in 
+                _customHandlers.where((x) => x.priority < 0)){
+              if (customHandler.matcher(req)){
+                ctx._body = body;
+                customHandler.handler(ctx);
+                return;
+              }            
+            }
+            
+            for (var verb in _verbPaths.keys){
+              var handlers = _verbPaths[verb];
+              for (var route in handlers.keys){
+                if (isMatch(verb, route, req)){
+                  logDebug("Handling $verb request to $route");
+                  var handler = handlers[route];
+                  ctx = new HttpContext(this, req, route);
+                  ctx._body = body;
+                  handler(ctx);
+                  return;
+                }
+              }            
+            }
+    
+            for (var formatter in formatters){
+              var result = formatter.render(ctx, null);
+              if (result != null){
+                ctx.sendHtml(result);
                 return;
               }
-            }            
-          }
-  
-          for (var formatter in formatters){
-            var result = formatter.render(ctx, null);
-            if (result != null){
-              ctx.sendHtml(result);
-              return;
             }
+            
+            for (RequestHandlerEntry customHandler in _customHandlers
+                .where((x) => x.priority >= 0)){
+              if (customHandler.matcher(req)){
+                customHandler.handler(ctx);
+                return;
+              }            
+            }
+          } catch(e, stacktrace){
+            errorHandler(e, stacktrace, ctx);
           }
           
-          for (RequestHandlerEntry customHandler in _customHandlers
-              .where((x) => x.priority >= 0)){
-            if (customHandler.matcher(req)){
-              customHandler.handler(ctx);
-              return;
-            }            
-          }
-        } catch(e, stacktrace){
-          errorHandler(e, stacktrace, ctx);
-        }
-        
-        new HttpContext(this, req).notFound("not found","'${req.uri.path}' was not found.");
+          new HttpContext(this, req).notFound("not found","'${req.uri.path}' was not found."); 
+        });
       });
       
       logInfo("listening on http://$host:$port");

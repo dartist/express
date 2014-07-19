@@ -103,6 +103,7 @@ abstract class HttpContext implements HttpRequest {
   HttpRequest  req;
   HttpResponse res;
   Map<String,String> get params;
+  Map<String,String> get body;
 
   //Read APIs
   String get contentType;

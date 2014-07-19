@@ -24,7 +24,7 @@ packages:
   markdown:
     description: markdown
     source: hosted
-    version: "0.5.1"
+    version: "0.7.0"
   matcher:
     description: matcher
     source: hosted

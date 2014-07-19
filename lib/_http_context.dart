@@ -7,6 +7,7 @@ class _HttpContext extends Stream<List<int>> implements HttpContext, HttpRequest
   HttpRequest  req;
   HttpResponse res;
   Map<String,String> _params;
+  Map<String,String> _body;
   String _format;
   Express express;
   bool _closed = false;
@@ -59,6 +60,8 @@ class _HttpContext extends Stream<List<int>> implements HttpContext, HttpRequest
     }
     return _params;
   }
+  
+  Map<String,String> get body => _body;
 
   Future<List<int>> readAsBytes() {
     var completer = new Completer<List<int>>();

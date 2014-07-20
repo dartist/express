@@ -14,6 +14,7 @@ import "package:ansicolor/ansicolor.dart" as ansicolor;
 part "content_types.dart";
 part "_express.dart";
 part "_http_context.dart";
+part "_route.dart";
 part "utils.dart";
 
 part "modules/static_file_handler.dart";
@@ -42,28 +43,28 @@ abstract class Express {
   Express use(Module module);
 
   //Register a request handler that will be called for a matching GET request
-  Express get(String atRoute, RequestHandler handler);
+  Route get(String atRoute, [RequestHandler handler]);
 
   //Register a request handler that will be called for a matching POST request
-  Express post(String atRoute, RequestHandler handler);
+  Route post(String atRoute, [RequestHandler handler]);
 
   //Register a request handler that will be called for a matching PUT request
-  Express put(String atRoute, RequestHandler handler);
+  Route put(String atRoute, [RequestHandler handler]);
 
   //Register a request handler that will be called for a matching DELETE request
-  Express delete(String atRoute, RequestHandler handler);
+  Route delete(String atRoute, [RequestHandler handler]);
 
   //Register a request handler that will be called for a matching PATCH request
-  Express patch(String atRoute, RequestHandler handler);
+  Route patch(String atRoute, [RequestHandler handler]);
 
   //Register a request handler that will be called for a matching HEAD request
-  Express head(String atRoute, RequestHandler handler);
+  Route head(String atRoute, [RequestHandler handler]);
 
   //Register a request handler that will be called for a matching OPTIONS request
-  Express options(String atRoute, RequestHandler handler);
+  Route options(String atRoute, [RequestHandler handler]);
 
   //Register a request handler that handles ANY verb
-  Express any(String atRoute, RequestHandler handler);
+  Route any(String atRoute, [RequestHandler handler]);
   
   //Register a custom request handler. Execute requestHandler, if matcher is true.
   //If priority < 0, custom handler will be executed before route handlers, otherwise after. 
@@ -140,8 +141,14 @@ abstract class HttpContext implements HttpRequest {
   bool get closed;
 }
 
+abstract class Route {
+  factory Route(String atRoute, ErrorHandler errorHandler) => new _Route(atRoute, errorHandler);
+  
+  Route then(RequestHandler handler);
+}
+
 // The signature your Request Handlers should implement
-typedef void RequestHandler (HttpContext ctx);
+typedef RequestHandler (HttpContext ctx);
 
 // Register different Formatters
 abstract class Formatter implements Module {

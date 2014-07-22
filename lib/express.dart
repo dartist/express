@@ -141,9 +141,12 @@ abstract class HttpContext implements HttpRequest {
   bool get closed;
 }
 
+/* This class is used to chain a queue of request handlers to a certain route.
+ */
 abstract class Route {
   factory Route(String atRoute, ErrorHandler errorHandler) => new _Route(atRoute, errorHandler);
   
+  // Register a new handler at the back of the queue
   Route then(RequestHandler handler);
 }
 

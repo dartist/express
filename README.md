@@ -84,6 +84,44 @@ main(){
 }
 ```
 
+### Add middleware methods to a route
+
+It happens that a developer has to check if a user is signed in or if the call to an API endpoint is valid. This
+is where middleware kicks in. In the following example, you can find a middleware method that checks if the user
+is signed in. The first line of the method should be replaced by the really checking if the user is signed in.
+
+```dart
+import 'package:express/express.dart';
+
+main(){
+  var app = new Express()
+    ..get('/', (ctx){
+      // render the homepage
+      ctx.sendJson({'homepage': true});
+    })
+
+    ..get('/dashboard').then(isSignedIn).then((ctx){
+      // render the dashboard
+      ctx.sendJson({'dashboard': true});
+    });
+
+  app.listen("127.0.0.1", 8000);
+}
+
+bool isSignedIn(HttpContext ctx) {
+  bool signedIn = true;
+  
+  if(!signedIn) {
+    ctx.res.redirect(new Uri(path: '/'));
+  }
+  
+  return signedIn;
+}
+```
+
+As you can see, you can just chain the handlers with the then() method. The middlewares should return a boolean indicating if
+we should continue to the next method or if we should stop executing.
+
 ### [Backbone Todo's JSON Server](https://github.com/dartist/express/blob/master/test/ExpressTests.dart#L42) 
 
 This is an example of an Redis-powered REST backend Backbones.js demo TODO application:
@@ -95,13 +133,13 @@ var app = new Express();
 app
   .use(new StaticFileHandler())
 
-  .get("/todos", (HttpContext ctx){
+  ..get("/todos", (HttpContext ctx){
     redis.keys("todo:*").then((keys) =>
       redis.mget(keys).then(ctx.sendJson)
     );
   })
   
-  .get("/todos/:id", (HttpContext ctx){
+  ..get("/todos/:id", (HttpContext ctx){
     var id = ctx.params["id"];
     redis.get("todo:$id").then((todo) =>
       todo != null ?
@@ -110,7 +148,7 @@ app
     );
   })
   
-  .post("/todos", (HttpContext ctx){
+  ..post("/todos", (HttpContext ctx){
     ctx.readAsJson().then((x){
       redis.incr("ids:todo").then((newId){
         var todo = $(x).defaults({"content":null,"done":false,"order":0});
@@ -121,7 +159,7 @@ app
     });
   })
   
-  .put("/todos/:id", (HttpContext ctx){
+  ..put("/todos/:id", (HttpContext ctx){
     var id = ctx.params["id"];
     ctx.readAsJson().then((todo){
       redis.set("todo:$id", todo);
@@ -129,7 +167,7 @@ app
     });
   })
   
-  .delete("/todos/:id", (HttpContext ctx){
+  ..delete("/todos/:id", (HttpContext ctx){
     redis.del("todo:${ctx.params['id']}");
     ctx.send();
   });
@@ -170,28 +208,28 @@ abstract class Express {
   Express use(Module module);
 
   //Register a request handler that will be called for a matching GET request
-  Express get(String atRoute, RequestHandler handler);
+  Route get(String atRoute, [RequestHandler handler]);
 
   //Register a request handler that will be called for a matching POST request
-  Express post(String atRoute, RequestHandler handler);
+  Route post(String atRoute, [RequestHandler handler]);
 
   //Register a request handler that will be called for a matching PUT request
-  Express put(String atRoute, RequestHandler handler);
+  Route put(String atRoute, [RequestHandler handler]);
 
   //Register a request handler that will be called for a matching DELETE request
-  Express delete(String atRoute, RequestHandler handler);
+  Route delete(String atRoute, [RequestHandler handler]);
 
   //Register a request handler that will be called for a matching PATCH request
-  Express patch(String atRoute, RequestHandler handler);
+  Route patch(String atRoute, [RequestHandler handler]);
 
   //Register a request handler that will be called for a matching HEAD request
-  Express head(String atRoute, RequestHandler handler);
+  Route head(String atRoute, [RequestHandler handler]);
 
   //Register a request handler that will be called for a matching OPTIONS request
-  Express options(String atRoute, RequestHandler handler);
+  Route options(String atRoute, [RequestHandler handler]);
 
   //Register a request handler that handles ANY verb
-  Express any(String atRoute, RequestHandler handler);
+  Route any(String atRoute, [RequestHandler handler]);
   
   //Register a custom request handler. Execute requestHandler, if matcher is true.
   //If priority < 0, custom handler will be executed before route handlers, otherwise after. 
@@ -227,13 +265,14 @@ abstract class HttpContext implements HttpRequest {
   HttpRequest  req;
   HttpResponse res;
   Map<String,String> get params;
+  Map<String,String> get body;
 
   //Read APIs
   String get contentType;
   Future<List<int>> readAsBytes();
-  Future<String> readAsText([Encoding encoding]);
-  Future<Object> readAsJson({Encoding encoding});
-  Future<Object> readAsObject([Encoding encoding]);
+  Future<String> readAsText([CONV.Encoding encoding]);
+  Future<Object> readAsJson({CONV.Encoding encoding});
+  Future<Object> readAsObject([CONV.Encoding encoding]);
 
   //Write APIs
   String get responseContentType;
@@ -337,3 +376,4 @@ Logger logger = (Object obj, {int logtype}) => print(obj);
 
   - [mythz](https://github.com/mythz) (Demis Bellot)
   - [financeCoding](https://github.com/financeCoding) (Adam Singer)
+  - [SamVerschueren](https://github.com/SamVerschueren) (Sam Verschueren)

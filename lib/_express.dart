@@ -13,7 +13,7 @@ class RequestHandlerEntry {
 String __dirname = Directory.current.toString();
 
 class _Express implements Express {
-  Map<String, LinkedHashMap<String,RequestHandler>> _verbPaths;
+  Map<String, LinkedHashMap<String,Route>> _verbPaths;
   List<String> _verbs = const ["GET","POST","PUT","DELETE","PATCH","HEAD","OPTIONS","ANY"];
   List<Module> _modules;
   HttpServer server;
@@ -22,7 +22,7 @@ class _Express implements Express {
   ErrorHandler errorHandler;
 
   _Express() {
-    _verbPaths = new Map<String, LinkedHashMap<String,RequestHandler>>();
+    _verbPaths = new Map<String, LinkedHashMap<String,Route>>();
     _verbs.forEach((x) => _verbPaths[x] = {});
     _modules = new List<Module>();
     _customHandlers = new List<RequestHandlerEntry>();
@@ -31,19 +31,15 @@ class _Express implements Express {
     config('views', 'views');
   }
 
-  Express _addHandler(String verb, String atRoute, RequestHandler handler){
-    _verbPaths[verb][atRoute] = managedRequestHandler(handler);
-    return this;
-  }
-  
-  managedRequestHandler(RequestHandler handler){
-    return (HttpContext ctx){
-      try {
-        handler(ctx);
-      } catch (e, stacktrace){
-        errorHandler(e, stacktrace, ctx);
-      }
-    };
+  Route _addHandler(String verb, String atRoute, [RequestHandler handler]){
+    var route = new Route(atRoute, errorHandler);
+    
+    if(handler != null) {
+      route.then(handler);
+    }
+    
+    _verbPaths[verb][atRoute] = route;
+    return route;
   }
 
   void config(String name, String value){
@@ -59,29 +55,29 @@ class _Express implements Express {
     return this;
   }
 
-  Express get(String atRoute, RequestHandler handler) =>
+  Route get(String atRoute, [RequestHandler handler]) =>
       _addHandler("GET", atRoute, handler);
 
-  Express post(String atRoute, RequestHandler handler) =>
+  Route post(String atRoute, [RequestHandler handler]) =>
       _addHandler("POST", atRoute, handler);
 
-  Express put(String atRoute, RequestHandler handler) =>
+  Route put(String atRoute, [RequestHandler handler]) =>
       _addHandler("PUT", atRoute, handler);
 
-  Express delete(String atRoute, RequestHandler handler) =>
+  Route delete(String atRoute, [RequestHandler handler]) =>
       _addHandler("DELETE", atRoute, handler);
 
-  Express patch(String atRoute, RequestHandler handler) =>
+  Route patch(String atRoute, [RequestHandler handler]) =>
       _addHandler("PATCH", atRoute, handler);
 
-  Express head(String atRoute, RequestHandler handler) =>
+  Route head(String atRoute, [RequestHandler handler]) =>
       _addHandler("HEAD", atRoute, handler);
 
-  Express options(String atRoute, RequestHandler handler) =>
+  Route options(String atRoute, [RequestHandler handler]) =>
       _addHandler("OPTIONS", atRoute, handler);
 
   // Register a request handler that handles any verb
-  Express any(String atRoute, RequestHandler handler) =>
+  Route any(String atRoute, [RequestHandler handler]) =>
       _addHandler("ANY", atRoute, handler);
 
   void operator []=(String atRoute, RequestHandler handler){
@@ -166,7 +162,7 @@ class _Express implements Express {
                   var handler = handlers[route];
                   ctx = new HttpContext(this, req, route);
                   ctx._body = body;
-                  handler(ctx);
+                  handler.handle(ctx);
                   return;
                 }
               }            

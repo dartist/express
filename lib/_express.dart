@@ -101,16 +101,16 @@ class _Express implements Express {
     _customHandlers.sort((x,y) => x.priority - y.priority);
   }
   
-  Iterable<Formatter> get formatters => _modules.where((x) => x is Formatter); 
+  Iterable<Formatter> get formatters => _modules.where((x) => x is Formatter).map((x)=>x as Formatter); 
 
   void render(HttpContext ctx, String viewName, [dynamic viewModel]){
-    for (var formatter in formatters){
+    formatters.any((formatter){
       var result = formatter.render(ctx, viewModel, viewName);
       if (result != null){
         ctx.sendHtml(result);
       }
-      if (ctx.closed) return;
-    }
+      if (ctx.closed) return true;
+    });
   }
   
   _errorHandler(e, stacktrace, HttpContext ctx){

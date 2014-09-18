@@ -8,6 +8,7 @@
 build.dart
 
 .buildlog
+.pub
 
 test/.DS_Store
 
